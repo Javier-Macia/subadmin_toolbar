@@ -1,0 +1,38 @@
+toolbar:
+  version: 2.2.0
+  css:
+    theme:
+      css/subadmin-toolbar.css: {}
+  js:
+    js/subadmin-toolbar.js: {}
+  dependencies:
+    - core/drupalSettings
+    - core/once
+    - subadmin_toolbar/material_icons
+
+admin_form:
+  version: 1.0.0
+  css:
+    theme:
+      css/subadmin-admin.css: {}
+  js:
+    js/subadmin-admin.js: {}
+  dependencies:
+    - core/drupalSettings
+    - core/once
+    - core/drupal.dialog.ajax
+    - subadmin_toolbar/material_icons
+
+material_icons:
+  version: 2.2.0
+  css:
+    theme:
+      'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap': { type: external }
+      'https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Round|Material+Icons+Sharp|Material+Icons+Two+Tone': { type: external }
+
+font_awesome:
+  version: 2.2.0
+  css:
+    theme:
+      'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css': { type: external }
+

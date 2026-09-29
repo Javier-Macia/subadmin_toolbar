@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for Subadmin Toolbar Local Material Icons submodule.
+ */
+
+/**
+ * Implements hook_library_info_alter().
+ *
+ * Replaces the remote Google Fonts Material Icons / Symbols CDN library definition
+ * in subadmin_toolbar with the local resource provided by native_material.
+ */
+function subadmin_toolbar_local_material_icons_library_info_alter(&$libraries, $extension) {
+  if ($extension === 'subadmin_toolbar' && isset($libraries['material_icons'])) {
+    // Strip remote CDN stylesheets.
+    $libraries['material_icons']['css']['theme'] = [];
+
+    // Delegate to the standalone local native_material module.
+    $libraries['material_icons']['dependencies'][] = 'native_material/all';
+  }
+}

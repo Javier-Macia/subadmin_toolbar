@@ -1,0 +1,124 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for Subadmin Toolbar module.
+ */
+
+use Drupal\file\Entity\File;
+
+/**
+ * Implements hook_theme().
+ */
+function subadmin_toolbar_theme($existing, $type, $theme, $path) {
+  return [
+    'subadmin_toolbar' => [
+      'variables' => [
+        'links' => [],
+        'toolbar_title' => NULL,
+        'toolbar_icon_url' => NULL,
+        'accent_color' => NULL,
+        'toolbar_title_link' => NULL,
+        'hide_icon' => FALSE,
+      ],
+      'template' => 'subadmin-toolbar',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_page_top().
+ */
+function subadmin_toolbar_page_top(array &$page_top) {
+  $current_user = \Drupal::currentUser();
+
+  // Verificar permiso del usuario.
+  if (!$current_user->hasPermission('access subadmin toolbar')) {
+    return;
+  }
+
+  // Cargar configuracion de enlaces.
+  $config = \Drupal::config('subadmin_toolbar.settings');
+  $stored_links = $config->get('links') ?: [];
+
+  $current_user_roles = $current_user->getRoles();
+  $raw_links = [];
+
+  foreach ($stored_links as $link) {
+    if (empty($link['title'])) {
+      continue;
+    }
+
+    // Saltar enlaces desactivados.
+    if (isset($link['status']) && $link['status'] === 'disabled') {
+      continue;
+    }
+
+    // Verificar acceso por rol.
+    $allowed_roles = array_filter($link['roles'] ?? []);
+    if (!empty($allowed_roles) && empty(array_intersect($allowed_roles, $current_user_roles))) {
+      continue;
+    }
+
+    $link_id = !empty($link['id']) ? $link['id'] : 'link_' . uniqid();
+    $raw_links[$link_id] = [
+      'id' => $link_id,
+      'pid' => $link['pid'] ?? '',
+      'title' => $link['title'],
+      'url' => empty($link['url']) ? '#' : $link['url'],
+      'icon' => $link['icon'] ?? '',
+      'icon_type' => $link['icon_type'] ?? 'material-symbols-outlined',
+      'below' => [],
+    ];
+  }
+
+  // Construir arbol de enlaces.
+  $visible_links = [];
+  foreach ($raw_links as $id => &$link) {
+    if (!empty($link['pid']) && isset($raw_links[$link['pid']])) {
+      $raw_links[$link['pid']]['below'][$id] = &$link;
+    } else {
+      $visible_links[$id] = &$link;
+    }
+  }
+
+  if (!empty($visible_links)) {
+    $general_config = \Drupal::config('subadmin_toolbar.general');
+    $toolbar_title = $general_config->get('toolbar_title') !== NULL ? $general_config->get('toolbar_title') : 'Gestión';
+    $accent_color = $general_config->get('accent_color') ?? '#0073ff';
+    $toolbar_title_link = $general_config->get('toolbar_title_link') ?? '';
+
+    $icon_url = NULL;
+    $fid = $general_config->get('toolbar_icon');
+    if ($fid) {
+      $file = File::load($fid);
+      if ($file) {
+        $icon_url = \Drupal::service('file_url_generator')->generateAbsoluteString($file->getFileUri());
+      }
+    }
+
+    $page_top['subadmin_toolbar'] = [
+      '#theme' => 'subadmin_toolbar',
+      '#links' => $visible_links,
+      '#toolbar_title' => $toolbar_title,
+      '#toolbar_icon_url' => $icon_url,
+      '#accent_color' => $accent_color,
+      '#toolbar_title_link' => $toolbar_title_link,
+      '#hide_icon' => (bool) ($general_config->get('hide_icon') ?? FALSE),
+      '#cache' => [
+        'contexts' => ['user.roles', 'user.permissions'],
+        'tags' => [
+          'config:subadmin_toolbar.settings',
+          'config:subadmin_toolbar.general',
+        ],
+      ],
+      '#attached' => [
+        'library' => array_merge(
+          ['subadmin_toolbar/toolbar'],
+          !empty($general_config->get('enable_font_awesome')) ? ['subadmin_toolbar/font_awesome'] : []
+        ),
+      ],
+      '#weight' => -100,
+    ];
+  }
+}

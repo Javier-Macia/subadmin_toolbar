@@ -1,0 +1,9 @@
+name: 'Subadmin Toolbar Local Font Awesome'
+type: module
+description: 'Configures Subadmin Toolbar to use local Font Awesome icons provided by native_fontawesome instead of Cloudflare CDN.'
+package: DropSense
+core_version_requirement: ^10 || ^11 || ^12
+version: 1.0.0
+dependencies:
+  - subadmin_toolbar:subadmin_toolbar
+  - native_fontawesome:native_fontawesome

@@ -1,0 +1,20 @@
+{
+  "name": "javierms/subadmin_toolbar",
+  "description": "A responsive, customizable administration toolbar for secondary roles with modern visual drag-and-drop builder, granular role permissions, and decoupled icon packages.",
+  "type": "drupal-module",
+  "license": "GPL-2.0-or-later",
+  "authors": [
+    {
+      "name": "JavierMS",
+      "role": "Maintainer"
+    }
+  ],
+  "keywords": ["drupal", "toolbar", "admin", "subadmin", "menu", "drag and drop", "roles", "icons"],
+  "require": {
+    "drupal/core": "^10 || ^11 || ^12"
+  },
+  "suggest": {
+    "javierms/native_material": "Serve Google Material Symbols and Material Icons 100% locally without external CDN requests.",
+    "javierms/native_fontawesome": "Serve Font Awesome 6 icons 100% locally without external CDN requests."
+  }
+}

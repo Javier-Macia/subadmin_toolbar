@@ -1,0 +1,11 @@
+subadmin_toolbar.settings_tab:
+  route_name: subadmin_toolbar.settings
+  title: 'General Settings'
+  base_route: subadmin_toolbar.settings
+  weight: 10
+
+subadmin_toolbar.links_tab:
+  title: 'Menu Structure'
+  route_name: subadmin_toolbar.links_settings
+  base_route: subadmin_toolbar.settings
+  weight: 20

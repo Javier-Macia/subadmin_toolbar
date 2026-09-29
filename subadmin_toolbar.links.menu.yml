@@ -1,0 +1,5 @@
+subadmin_toolbar.settings:
+  title: 'Subadmin Toolbar'
+  description: 'Configure links and role access for the Subadmin Toolbar.'
+  parent: system.admin_config_ui
+  route_name: subadmin_toolbar.settings

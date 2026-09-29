@@ -1,0 +1,4 @@
+access subadmin toolbar:
+  title: 'Access the Subadmin Toolbar'
+  description: 'Allow users to view the subadmin toolbar and its configured links.'
+  restrict access: true

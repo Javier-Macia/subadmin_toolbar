@@ -1,0 +1,7 @@
+name: 'Subadmin Toolbar'
+type: module
+description: 'Provides a custom Gin-like toolbar for sub-administrators to access specific links depending on their role.'
+package: DropSense
+core_version_requirement: ^10 || ^11 || ^12
+configure: subadmin_toolbar.settings
+version: 3.0.0

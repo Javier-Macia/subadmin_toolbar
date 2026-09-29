@@ -1,0 +1,64 @@
+subadmin_toolbar.settings:
+  type: config_object
+  label: 'Subadmin Toolbar settings'
+  mapping:
+    links:
+      type: sequence
+      label: 'Links'
+      sequence:
+        type: mapping
+        label: 'Link item'
+        mapping:
+          id:
+            type: string
+            label: 'ID'
+          pid:
+            type: string
+            label: 'Parent ID'
+          title:
+            type: string
+            label: 'Title'
+          url:
+            type: string
+            label: 'URL'
+          icon_type:
+            type: string
+            label: 'Icon Font Family'
+          icon:
+            type: string
+            label: 'Icon'
+          roles:
+            type: sequence
+            label: 'Roles'
+            sequence:
+              type: string
+              label: 'Role name'
+          status:
+            type: string
+            label: 'Status (enabled/disabled)'
+          weight:
+            type: integer
+            label: 'Weight'
+
+subadmin_toolbar.general:
+  type: config_object
+  label: 'Subadmin Toolbar General Settings'
+  mapping:
+    toolbar_title:
+      type: string
+      label: 'Toolbar Title'
+    accent_color:
+      type: string
+      label: 'Accent Color'
+    toolbar_icon:
+      type: integer
+      label: 'Toolbar Icon File ID'
+    toolbar_title_link:
+      type: string
+      label: 'Toolbar Title Link'
+    hide_icon:
+      type: boolean
+      label: 'Hide Toolbar Icon'
+    enable_font_awesome:
+      type: boolean
+      label: 'Enable Font Awesome'
