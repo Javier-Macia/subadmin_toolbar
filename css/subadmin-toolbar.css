@@ -75,7 +75,7 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
     align-items: center;
     padding: 0 16px;
     box-sizing: border-box;
-    overflow: hidden;
+    overflow: visible;
 }
 
 /* --- Brand --- */
@@ -289,8 +289,17 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
 }
 
 #subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-inner,
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-collapse,
 #subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-menu {
     position: static !important;
+}
+
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-collapse {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    height: 100%;
+    min-width: 0;
 }
 
 #subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-submenu {
@@ -339,28 +348,46 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
 }
 
 /* ==========================================================================
-   Modo compacto/móvil: .is-narrow y media query <= 768px
-   Botón hamburguesa y menú desplegable vertical
+   Modo compacto/móvil: .is-narrow
    ========================================================================== */
 #subadmin-toolbar.is-narrow .subadmin-toolbar-toggle {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
 }
 
-#subadmin-toolbar.is-narrow .subadmin-toolbar-menu {
+#subadmin-toolbar.is-narrow .subadmin-toolbar-collapse {
     position: absolute;
-    top: var(--subadmin-toolbar-height);
+    top: var(--subadmin-toolbar-height, 56px);
     left: 0;
     width: 100%;
     flex-direction: column;
     background-color: var(--subadmin-toolbar-bg);
     display: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, .4);
-    height: auto;
-    overflow: visible;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .28);
+    max-height: calc(100vh - var(--subadmin-toolbar-height, 56px));
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-top: 1px solid var(--subadmin-toolbar-border);
+    z-index: calc(var(--subadmin-toolbar-z-index, 1000) + 10);
 }
 
-#subadmin-toolbar.is-narrow .subadmin-toolbar-menu.is-active {
+#subadmin-toolbar.is-narrow .subadmin-toolbar-collapse.is-active {
     display: flex;
+}
+
+#subadmin-toolbar.is-narrow .subadmin-toolbar-menu {
+    position: static;
+    width: 100%;
+    flex-direction: column;
+    background-color: transparent;
+    display: flex;
+    box-shadow: none;
+    height: auto;
+    overflow: visible;
+    margin: 0;
+    padding: 0;
 }
 
 #subadmin-toolbar.is-narrow .subadmin-toolbar-item {
@@ -439,26 +466,103 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
     padding-left: 64px;
 }
 
+#subadmin-toolbar.is-narrow .subadmin-toolbar-widgets {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 14px 20px;
+    width: 100%;
+    box-sizing: border-box;
+    border-top: 1px solid var(--subadmin-toolbar-border);
+    background-color: var(--subadmin-toolbar-hover-bg, rgba(0, 0, 0, .04));
+    margin: 0;
+    height: auto;
+    min-height: 54px;
+}
+
+#subadmin-toolbar.is-narrow .subadmin-toolbar-widget {
+    display: inline-flex;
+    align-items: center;
+    height: auto;
+}
+
+#subadmin-toolbar.is-narrow .subadmin-toolbar-widget ul.menu {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#subadmin-toolbar.is-narrow .subadmin-toolbar-widget ul.menu a {
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid var(--subadmin-toolbar-border);
+    border-radius: 6px;
+    background-color: var(--subadmin-toolbar-bg);
+    color: var(--subadmin-toolbar-text);
+    text-decoration: none;
+    transition: all .15s ease;
+}
+
+#subadmin-toolbar.is-narrow .subadmin-toolbar-widget ul.menu a:hover {
+    background-color: var(--subadmin-toolbar-hover-bg);
+    color: var(--subadmin-toolbar-accent);
+}
+
+#subadmin-toolbar.is-narrow .theme-dropdown-menu {
+    bottom: calc(100% + 8px);
+    top: auto;
+    margin-top: 0;
+    margin-bottom: 4px;
+}
+
+/* ==========================================================================
+   Modo móvil: media query <= 768px
+   ========================================================================== */
 @media (max-width: 768px) {
     #subadmin-toolbar .subadmin-toolbar-toggle {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: auto;
     }
 
-    #subadmin-toolbar .subadmin-toolbar-menu {
+    #subadmin-toolbar .subadmin-toolbar-collapse {
         position: absolute;
-        top: var(--subadmin-toolbar-height);
+        top: var(--subadmin-toolbar-height, 56px);
         left: 0;
         width: 100%;
         flex-direction: column;
         background-color: var(--subadmin-toolbar-bg);
         display: none;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, .4);
-        height: auto;
-        overflow: visible;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, .28);
+        max-height: calc(100vh - var(--subadmin-toolbar-height, 56px));
+        overflow-y: auto;
+        overflow-x: hidden;
+        border-top: 1px solid var(--subadmin-toolbar-border);
+        z-index: calc(var(--subadmin-toolbar-z-index, 1000) + 10);
     }
 
-    #subadmin-toolbar .subadmin-toolbar-menu.is-active {
+    #subadmin-toolbar .subadmin-toolbar-collapse.is-active {
         display: flex;
+    }
+
+    #subadmin-toolbar .subadmin-toolbar-menu {
+        position: static;
+        width: 100%;
+        flex-direction: column;
+        background-color: transparent;
+        display: flex;
+        box-shadow: none;
+        height: auto;
+        overflow: visible;
+        margin: 0;
+        padding: 0;
     }
 
     #subadmin-toolbar .subadmin-toolbar-item {
@@ -536,6 +640,61 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
     #subadmin-toolbar .subadmin-toolbar-submenu .subadmin-toolbar-submenu .subadmin-toolbar-sublink {
         padding-left: 64px;
     }
+
+    #subadmin-toolbar .subadmin-toolbar-widgets {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 14px;
+        padding: 14px 20px;
+        width: 100%;
+        box-sizing: border-box;
+        border-top: 1px solid var(--subadmin-toolbar-border);
+        background-color: var(--subadmin-toolbar-hover-bg, rgba(0, 0, 0, .04));
+        margin: 0;
+        height: auto;
+        min-height: 54px;
+    }
+
+    #subadmin-toolbar .subadmin-toolbar-widget {
+        display: inline-flex;
+        align-items: center;
+        height: auto;
+    }
+
+    #subadmin-toolbar .subadmin-toolbar-widget ul.menu {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    #subadmin-toolbar .subadmin-toolbar-widget ul.menu a {
+        padding: 6px 12px;
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid var(--subadmin-toolbar-border);
+        border-radius: 6px;
+        background-color: var(--subadmin-toolbar-bg);
+        color: var(--subadmin-toolbar-text);
+        text-decoration: none;
+        transition: all .15s ease;
+    }
+
+    #subadmin-toolbar .subadmin-toolbar-widget ul.menu a:hover {
+        background-color: var(--subadmin-toolbar-hover-bg);
+        color: var(--subadmin-toolbar-accent);
+    }
+
+    #subadmin-toolbar .theme-dropdown-menu {
+        bottom: calc(100% + 8px);
+        top: auto;
+        margin-top: 0;
+        margin-bottom: 4px;
+    }
 }
 
 /* ==========================================================================
@@ -550,29 +709,97 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
     height: calc(100vh - var(--subadmin-toolbar-offset, 56px)) !important;
 }
 
-/* Gin secondary toolbar se desplaza hacia abajo */
+/* Gin secondary toolbar se desplaza hacia abajo cuando está visible */
 .gin-secondary-toolbar {
     margin-top: var(--subadmin-toolbar-height, 56px) !important;
 }
 
-/* En modos o páginas sin .gin-secondary-toolbar (ej: New Drupal Navigation) */
-.gin--navigation .region-sticky:not(.region-sticky--is-sticky),
-body:not(:has(.gin-secondary-toolbar)) .region-sticky:not(.region-sticky--is-sticky) {
+/* Cuando .gin-secondary-toolbar está oculta (display: none) o ausente en el DOM */
+body.gin--secondary-toolbar-hidden .region-sticky-watcher,
+body:not(:has(.gin-secondary-toolbar)) .region-sticky-watcher {
     margin-top: var(--subadmin-toolbar-height, 56px) !important;
 }
 
-/* Cuando el header se hace sticky al hacer scroll */
-.region-sticky--is-sticky,
-.gin-sticky,
-.gin--edit-form .region-header,
-.gin--sticky-form .region-sticky {
-    top: var(--subadmin-toolbar-offset, 56px) !important;
-    inset-block-start: var(--subadmin-toolbar-offset, 56px) !important;
+body.gin--secondary-toolbar-hidden:not(:has(.region-sticky-watcher)) .region-sticky,
+body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)) .region-sticky {
+    margin-top: var(--subadmin-toolbar-height, 56px) !important;
 }
 
-/* Ocultar campo de búsqueda desalineado en modos Gin con barra lateral */
-body.gin--vertical-toolbar #admin-toolbar-search-field-tab,
-body.gin--navigation #admin-toolbar-search-field-tab,
+body.gin--secondary-toolbar-hidden:not(:has(.region-sticky-watcher)):not(:has(.region-sticky)) #block-gin-content,
+body.gin--secondary-toolbar-hidden:not(:has(.region-sticky-watcher)):not(:has(.region-sticky)) .page-content,
+body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:has(.region-sticky)) #block-gin-content,
+body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:has(.region-sticky)) .page-content {
+    margin-top: var(--subadmin-toolbar-height, 56px) !important;
+}
+
+/* Cabecera de Gin (título de página y acciones sticky): se posiciona debajo de subadmin-toolbar sin solaparse */
+.region-sticky,
+.region-sticky--is-sticky {
+    top: var(--subadmin-toolbar-offset, 56px) !important;
+    inset-block-start: var(--subadmin-toolbar-offset, 56px) !important;
+    z-index: calc(var(--subadmin-toolbar-z-index, 1000) - 10) !important;
+}
+
+.gin-sticky,
+.gin--edit-form .region-header,
 .gin-secondary-toolbar #admin-toolbar-search-field-tab {
     display: none !important;
+}
+
+/* ==========================================================================
+   Subadmin Toolbar - Widgets en Escritorio (Alineados a la derecha del todo)
+   ========================================================================== */
+.subadmin-toolbar-widgets {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+    height: 100%;
+    flex-shrink: 0;
+    padding-left: 16px;
+    position: relative;
+    overflow: visible;
+}
+
+.subadmin-toolbar-widget {
+    display: inline-flex;
+    align-items: center;
+    height: 100%;
+    position: relative;
+    overflow: visible;
+}
+
+.subadmin-toolbar-widget .block {
+    margin: 0;
+    padding: 0;
+}
+
+/* Disposición horizontal para bloques de menú (ej: menú de cuenta) en la barra */
+.subadmin-toolbar-widget ul.menu {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 4px;
+}
+
+.subadmin-toolbar-widget ul.menu li {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.subadmin-toolbar-widget ul.menu a {
+    color: var(--subadmin-toolbar-text);
+    text-decoration: none;
+    font-size: var(--subadmin-toolbar-font-size, 14px);
+    padding: 6px 10px;
+    border-radius: 4px;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.subadmin-toolbar-widget ul.menu a:hover {
+    background-color: var(--subadmin-toolbar-hover-bg);
+    color: var(--subadmin-toolbar-accent);
 }

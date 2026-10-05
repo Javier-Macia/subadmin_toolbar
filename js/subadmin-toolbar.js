@@ -82,9 +82,27 @@
       docStyle.setProperty('--gin-sticky-offset', totalTop + 'px');
     }
 
+    var secToolbar = document.querySelector('.gin-secondary-toolbar');
+    if (secToolbar) {
+      var secVisible = secToolbar.offsetHeight > 0 && getComputedStyle(secToolbar).display !== 'none';
+      document.body.classList.toggle('gin--secondary-toolbar-hidden', !secVisible);
+    } else if (mode.startsWith('gin')) {
+      document.body.classList.add('gin--secondary-toolbar-hidden');
+    }
+
     // Modo compacto (hamburguesa) en móvil (<= 768px).
-    bar.classList.toggle('is-narrow', w <= 768);
+    var isMobile = w <= 768;
+    bar.classList.toggle('is-narrow', isMobile);
     bar.setAttribute('data-layout-mode', mode);
+
+    if (!isMobile) {
+      var col = document.getElementById('subadmin-toolbar-collapse');
+      if (col && col.classList.contains('is-active')) {
+        col.classList.remove('is-active');
+        var btn = bar.querySelector('.subadmin-toolbar-toggle');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      }
+    }
   }
 
   function adjust() {
@@ -98,9 +116,25 @@
       once('sat-toggle', '.subadmin-toolbar-toggle', context).forEach(function (el) {
         el.addEventListener('click', function (e) {
           e.preventDefault();
-          var menu = document.getElementById('subadmin-toolbar-menu');
-          if (menu) menu.classList.toggle('is-active');
+          var collapse = document.getElementById('subadmin-toolbar-collapse') || document.getElementById('subadmin-toolbar-menu');
+          if (collapse) collapse.classList.toggle('is-active');
           this.setAttribute('aria-expanded', String(this.getAttribute('aria-expanded') !== 'true'));
+        });
+      });
+
+      // Cerrar collapse al hacer click fuera en móvil
+      once('sat-outside-click', document, context).forEach(function (doc) {
+        doc.addEventListener('click', function (e) {
+          var barEl = document.getElementById('subadmin-toolbar');
+          if (!barEl) return;
+          var collapse = document.getElementById('subadmin-toolbar-collapse');
+          if (collapse && collapse.classList.contains('is-active')) {
+            if (!barEl.contains(e.target)) {
+              collapse.classList.remove('is-active');
+              var btn = barEl.querySelector('.subadmin-toolbar-toggle');
+              if (btn) btn.setAttribute('aria-expanded', 'false');
+            }
+          }
         });
       });
 
@@ -128,6 +162,7 @@
       });
 
       adjust();
+
 
       window.addEventListener('resize',                     adjust);
       window.addEventListener('transitionend',              adjust);

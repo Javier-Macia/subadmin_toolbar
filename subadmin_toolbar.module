@@ -15,6 +15,7 @@ function subadmin_toolbar_theme($existing, $type, $theme, $path) {
     'subadmin_toolbar' => [
       'variables' => [
         'links' => [],
+        'widgets' => [],
         'toolbar_title' => NULL,
         'toolbar_icon_url' => NULL,
         'accent_color' => NULL,
@@ -82,7 +83,27 @@ function subadmin_toolbar_page_top(array &$page_top) {
     }
   }
 
-  if (!empty($visible_links)) {
+  // Cargar y procesar widgets.
+  $stored_widgets = $config->get('widgets') ?: [];
+  $rendered_widgets = [];
+
+  foreach ($stored_widgets as $widget) {
+    if (isset($widget['status']) && $widget['status'] === 'disabled') {
+      continue;
+    }
+
+    $allowed_roles = array_filter($widget['roles'] ?? []);
+    if (!empty($allowed_roles) && empty(array_intersect($allowed_roles, $current_user_roles))) {
+      continue;
+    }
+
+    $widget_render = subadmin_toolbar_render_widget($widget, $current_user);
+    if (!empty($widget_render)) {
+      $rendered_widgets[] = $widget_render;
+    }
+  }
+
+  if (!empty($visible_links) || !empty($rendered_widgets)) {
     $general_config = \Drupal::config('subadmin_toolbar.general');
     $toolbar_title = $general_config->get('toolbar_title') !== NULL ? $general_config->get('toolbar_title') : 'Gestión';
     $accent_color = $general_config->get('accent_color') ?? '#0073ff';
@@ -100,13 +121,14 @@ function subadmin_toolbar_page_top(array &$page_top) {
     $page_top['subadmin_toolbar'] = [
       '#theme' => 'subadmin_toolbar',
       '#links' => $visible_links,
+      '#widgets' => $rendered_widgets,
       '#toolbar_title' => $toolbar_title,
       '#toolbar_icon_url' => $icon_url,
       '#accent_color' => $accent_color,
       '#toolbar_title_link' => $toolbar_title_link,
       '#hide_icon' => (bool) ($general_config->get('hide_icon') ?? FALSE),
       '#cache' => [
-        'contexts' => ['user.roles', 'user.permissions'],
+        'contexts' => ['user', 'user.roles', 'user.permissions'],
         'tags' => [
           'config:subadmin_toolbar.settings',
           'config:subadmin_toolbar.general',
@@ -122,3 +144,72 @@ function subadmin_toolbar_page_top(array &$page_top) {
     ];
   }
 }
+
+/**
+ * Helper to render an existing block widget for the subadmin toolbar.
+ */
+function subadmin_toolbar_render_widget(array $widget, $current_user) {
+  $plugin_id = $widget['plugin_id'] ?? '';
+  if (empty($plugin_id) || !\Drupal::hasService('plugin.manager.block')) {
+    return [];
+  }
+
+  /** @var \Drupal\Core\Block\BlockManagerInterface $block_manager */
+  $block_manager = \Drupal::service('plugin.manager.block');
+  if (!$block_manager->hasDefinition($plugin_id)) {
+    return [];
+  }
+
+  $configuration = $widget['settings'] ?? [];
+  $configuration['label_display'] = !empty($widget['label_display']) ? 'visible' : FALSE;
+  if (!empty($widget['label'])) {
+    $configuration['label'] = $widget['label'];
+  }
+
+  try {
+    /** @var \Drupal\Core\Block\BlockPluginInterface $plugin */
+    $plugin = $block_manager->createInstance($plugin_id, $configuration);
+
+    // Inyectar contextos si es ContextAwarePluginInterface
+    if ($plugin instanceof \Drupal\Core\Plugin\ContextAwarePluginInterface) {
+      $contexts = \Drupal::service('context.repository')->getRuntimeContexts($plugin->getContextMapping());
+      \Drupal::service('context.handler')->applyContextMapping($plugin, $contexts);
+    }
+
+    $access = $plugin->access($current_user, TRUE);
+    if (!$access->isAllowed()) {
+      return [];
+    }
+
+    $content = $plugin->build();
+    if ($content === NULL || \Drupal\Core\Render\Element::isEmpty($content)) {
+      return [];
+    }
+
+    $build = [
+      '#theme' => 'block',
+      '#attributes' => [
+        'class' => [
+          'subadmin-toolbar-widget',
+          'subadmin-widget-' . \Drupal\Component\Utility\Html::cleanCssIdentifier($plugin_id),
+        ],
+      ],
+      '#configuration' => $plugin->getConfiguration(),
+      '#plugin_id' => $plugin->getPluginId(),
+      '#base_plugin_id' => $plugin->getBaseId(),
+      '#derivative_plugin_id' => $plugin->getDerivativeId(),
+      '#id' => 'sat_' . ($widget['id'] ?? uniqid()),
+      'content' => $content,
+    ];
+
+    \Drupal\Core\Render\BubbleableMetadata::createFromRenderArray($build)
+      ->addCacheableDependency($access)
+      ->addCacheableDependency($plugin);
+
+    return $build;
+  }
+  catch (\Exception $e) {
+    return [];
+  }
+}
+

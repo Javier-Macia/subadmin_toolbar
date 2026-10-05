@@ -440,3 +440,39 @@ html[data-gin-color-scheme="dark"] .subadmin-form-group label,
 [data-theme="dark"] .subadmin-form-group label {
   color: #f8fafc !important;
 }
+
+/* Block-specific settings container inside widget configuration */
+.subadmin-block-settings-wrapper {
+  margin-top: 1rem;
+  padding: 1.1rem 1.25rem;
+  background-color: var(--color-bg-app, #f8fafc);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 8px;
+}
+
+.subadmin-block-settings-wrapper > legend {
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0 0.5rem;
+  color: var(--color-text, #1e293b);
+}
+
+.subadmin-block-settings-wrapper .form-item {
+  margin-top: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+
+html[data-gin-color-scheme="dark"] .subadmin-block-settings-wrapper,
+body.gin--dark-mode .subadmin-block-settings-wrapper,
+body.theme-dark .subadmin-block-settings-wrapper,
+[data-theme="dark"] .subadmin-block-settings-wrapper {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+html[data-gin-color-scheme="dark"] .subadmin-block-settings-wrapper > legend,
+body.gin--dark-mode .subadmin-block-settings-wrapper > legend,
+body.theme-dark .subadmin-block-settings-wrapper > legend,
+[data-theme="dark"] .subadmin-block-settings-wrapper > legend {
+  color: #f8fafc !important;
+}

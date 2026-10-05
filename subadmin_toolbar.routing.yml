@@ -13,3 +13,11 @@ subadmin_toolbar.links_settings:
     _title: 'Subadmin Toolbar - Menu Links'
   requirements:
     _permission: 'administer site configuration'
+
+subadmin_toolbar.widgets_settings:
+  path: '/admin/config/user-interface/subadmin-toolbar/widgets'
+  defaults:
+    _form: '\Drupal\subadmin_toolbar\Form\WidgetsSettingsForm'
+    _title: 'Subadmin Toolbar - Widgets'
+  requirements:
+    _permission: 'administer site configuration'

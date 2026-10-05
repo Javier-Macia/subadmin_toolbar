@@ -9,3 +9,9 @@ subadmin_toolbar.links_tab:
   route_name: subadmin_toolbar.links_settings
   base_route: subadmin_toolbar.settings
   weight: 20
+
+subadmin_toolbar.widgets_tab:
+  title: 'Widgets'
+  route_name: subadmin_toolbar.widgets_settings
+  base_route: subadmin_toolbar.settings
+  weight: 30
