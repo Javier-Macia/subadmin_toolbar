@@ -11,7 +11,7 @@
 {% endmacro %}
 {% import _self as macros %}
 
-{% if links %}
+{% if links or widgets %}
 	<div id="subadmin-toolbar" class="subadmin-toolbar gin-like-toolbar" role="navigation" aria-label="Subadministrator Toolbar" style="--subadmin-toolbar-toggle-hover-color: {{ accent_color|default('#0073ff') }}; --subadmin-toolbar-accent: {{ accent_color|default('#0073ff') }};">
 		<div class="subadmin-toolbar-inner">
 			<div class="subadmin-toolbar-brand">
@@ -38,37 +38,49 @@
 				{% endif %}
 			</div>
 
-			<button class="subadmin-toolbar-toggle" aria-expanded="false" aria-controls="subadmin-toolbar-menu">
+			<div id="subadmin-toolbar-collapse" class="subadmin-toolbar-collapse">
+				{% if links %}
+					<ul id="subadmin-toolbar-menu" class="subadmin-toolbar-menu">
+						{% macro render_menu_items(items, is_root) %}
+							{% import _self as macros %}
+							{% for link in items %}
+								<li class="{% if is_root %}subadmin-toolbar-item{% else %}subadmin-toolbar-subitem{% endif %} {% if link.below %}has-submenu{% endif %}">
+									<a href="{{ link.url }}" class="{% if is_root %}subadmin-toolbar-link{% else %}subadmin-toolbar-sublink{% endif %}">
+										{{ macros.render_icon(link) }}
+										<span class="subadmin-toolbar-text">{{ link.title }}</span>
+										{% if link.below %}
+											<span class="subadmin-toolbar-caret material-symbols-outlined" translate="no">
+												{% if is_root %}expand_more{% else %}chevron_right
+												{% endif %}
+											</span>
+										{% endif %}
+									</a>
+
+									{% if link.below %}
+										<ul class="subadmin-toolbar-submenu">
+											{{ macros.render_menu_items(link.below, false) }}
+										</ul>
+									{% endif %}
+								</li>
+							{% endfor %}
+						{% endmacro %}
+
+						{{ macros.render_menu_items(links, true) }}
+					</ul>
+				{% endif %}
+
+				{% if widgets %}
+					<div class="subadmin-toolbar-widgets">
+						{% for widget in widgets %}
+							{{ widget }}
+						{% endfor %}
+					</div>
+				{% endif %}
+			</div>
+
+			<button class="subadmin-toolbar-toggle" aria-expanded="false" aria-controls="subadmin-toolbar-collapse">
 				<span class="subadmin-toolbar-toggle-icon" translate="no"></span>
 			</button>
-
-			<ul id="subadmin-toolbar-menu" class="subadmin-toolbar-menu">
-				{% macro render_menu_items(items, is_root) %}
-					{% import _self as macros %}
-					{% for link in items %}
-						<li class="{% if is_root %}subadmin-toolbar-item{% else %}subadmin-toolbar-subitem{% endif %} {% if link.below %}has-submenu{% endif %}">
-							<a href="{{ link.url }}" class="{% if is_root %}subadmin-toolbar-link{% else %}subadmin-toolbar-sublink{% endif %}">
-								{{ macros.render_icon(link) }}
-								<span class="subadmin-toolbar-text">{{ link.title }}</span>
-								{% if link.below %}
-									<span class="subadmin-toolbar-caret material-symbols-outlined" translate="no">
-										{% if is_root %}expand_more{% else %}chevron_right
-										{% endif %}
-									</span>
-								{% endif %}
-							</a>
-
-							{% if link.below %}
-								<ul class="subadmin-toolbar-submenu">
-									{{ macros.render_menu_items(link.below, false) }}
-								</ul>
-							{% endif %}
-						</li>
-					{% endfor %}
-				{% endmacro %}
-
-				{{ macros.render_menu_items(links, true) }}
-			</ul>
 		</div>
 	</div>
 {% endif %}

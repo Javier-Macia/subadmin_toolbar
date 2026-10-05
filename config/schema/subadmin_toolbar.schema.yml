@@ -39,6 +39,40 @@ subadmin_toolbar.settings:
           weight:
             type: integer
             label: 'Weight'
+    widgets:
+      type: sequence
+      label: 'Widgets'
+      sequence:
+        type: mapping
+        label: 'Widget item'
+        mapping:
+          id:
+            type: string
+            label: 'ID'
+          plugin_id:
+            type: string
+            label: 'Block Plugin ID'
+          label:
+            type: string
+            label: 'Custom Label'
+          label_display:
+            type: boolean
+            label: 'Display Label'
+          status:
+            type: string
+            label: 'Status (enabled/disabled)'
+          roles:
+            type: sequence
+            label: 'Roles'
+            sequence:
+              type: string
+              label: 'Role name'
+          weight:
+            type: integer
+            label: 'Weight'
+          settings:
+            type: ignore
+            label: 'Block Plugin Settings'
 
 subadmin_toolbar.general:
   type: config_object
