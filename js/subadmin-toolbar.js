@@ -161,17 +161,16 @@
         });
       });
 
-      adjust();
+      // Global listeners and the initial layout run once per page, not on
+      // every AJAX attach.
+      once('sat-global', 'html').forEach(function () {
+        ['resize', 'transitionend', 'drupalToolbarTabChange', 'drupalToolbarTrayChange', 'drupalViewportOffsetChange']
+          .forEach(function (name) { window.addEventListener(name, adjust); });
 
-
-      window.addEventListener('resize',                     adjust);
-      window.addEventListener('transitionend',              adjust);
-      window.addEventListener('drupalToolbarTabChange',     adjust);
-      window.addEventListener('drupalToolbarTrayChange',    adjust);
-      window.addEventListener('drupalViewportOffsetChange', adjust);
-
-      // Timeout preventivo para renderizado asíncrono de Gin/sidebars.
-      setTimeout(adjust, 300);
+        adjust();
+        // Deferred pass for Gin/sidebars that render asynchronously.
+        setTimeout(adjust, 300);
+      });
 
       once('sat-obs', 'body', context).forEach(function (bodyEl) {
         // Observar cambios en clases del body (cambios de tema o toolbar).
