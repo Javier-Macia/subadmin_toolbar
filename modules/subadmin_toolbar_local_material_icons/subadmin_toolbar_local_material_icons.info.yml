@@ -2,8 +2,7 @@ name: 'Subadmin Toolbar Local Material Icons'
 type: module
 description: 'Configures Subadmin Toolbar to use local Material Icons / Symbols provided by native_material instead of Google Fonts CDN.'
 package: DropSense
-core_version_requirement: ^10 || ^11 || ^12
-version: 1.0.0
+core_version_requirement: ^10.3 || ^11 || ^12
 dependencies:
   - subadmin_toolbar:subadmin_toolbar
   - native_material:native_material

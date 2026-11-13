@@ -2,48 +2,71 @@
 
 namespace Drupal\subadmin_toolbar\Form;
 
-use Drupal\Core\Form\ConfigFormBase;
+use Drupal\Core\Block\BlockManagerInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\TypedConfigManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
-use Drupal\user\Entity\Role;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Configure widgets (blocks) for Subadmin Toolbar.
  */
-class WidgetsSettingsForm extends ConfigFormBase {
+class WidgetsSettingsForm extends ToolbarFormBase {
+
+  public function __construct(
+    ConfigFactoryInterface $config_factory,
+    TypedConfigManagerInterface $typed_config_manager,
+    EntityTypeManagerInterface $entity_type_manager,
+    ModuleHandlerInterface $module_handler,
+    protected BlockManagerInterface $blockManager,
+    protected LoggerInterface $logger,
+  ) {
+    parent::__construct($config_factory, $typed_config_manager, $entity_type_manager, $module_handler);
+  }
 
   /**
    * {@inheritdoc}
    */
-  protected function getEditableConfigNames() {
+  public static function create(ContainerInterface $container): static {
+    return new static(
+      $container->get('config.factory'),
+      $container->get('config.typed'),
+      $container->get('entity_type.manager'),
+      $container->get('module_handler'),
+      $container->get('plugin.manager.block'),
+      $container->get('logger.channel.subadmin_toolbar'),
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getEditableConfigNames(): array {
     return ['subadmin_toolbar.settings'];
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getFormId() {
+  public function getFormId(): string {
     return 'subadmin_toolbar_widgets_settings_form';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state): array {
     if (!isset($form['#parents'])) {
       $form['#parents'] = [];
     }
 
     $config = $this->config('subadmin_toolbar.settings');
 
-    $roles = Role::loadMultiple();
-    $role_options = [];
-    foreach ($roles as $role) {
-      if ($role->id() === 'anonymous') {
-        continue;
-      }
-      $role_options[$role->id()] = $role->label();
-    }
+    $role_options = $this->getRoleOptions();
 
     $widgets = $form_state->get('widgets');
     if ($widgets === NULL) {
@@ -73,21 +96,15 @@ class WidgetsSettingsForm extends ConfigFormBase {
 
     // Obtener lista completa de bloques disponibles en Drupal organizados por categoría.
     $block_options = [];
-    $block_manager = NULL;
-    if (\Drupal::hasService('plugin.manager.block')) {
-      /** @var \Drupal\Core\Block\BlockManagerInterface $block_manager */
-      $block_manager = \Drupal::service('plugin.manager.block');
-      $definitions = $block_manager->getDefinitions();
-      foreach ($definitions as $plugin_id => $definition) {
-        $category = (string) ($definition['category'] ?? $this->t('Other'));
-        $label = (string) ($definition['admin_label'] ?? $plugin_id);
-        $block_options[$category][$plugin_id] = $label;
-      }
-      ksort($block_options);
-      foreach ($block_options as $cat => &$items) {
-        asort($items);
-      }
+    foreach ($this->blockManager->getDefinitions() as $plugin_id => $definition) {
+      $category = (string) ($definition['category'] ?? $this->t('Other'));
+      $block_options[$category][$plugin_id] = (string) ($definition['admin_label'] ?? $plugin_id);
     }
+    ksort($block_options);
+    foreach ($block_options as &$items) {
+      asort($items);
+    }
+    unset($items);
 
     $form['#attached']['library'][] = 'core/drupal.dialog.ajax';
     $form['#attached']['library'][] = 'subadmin_toolbar/admin_form';
@@ -95,7 +112,8 @@ class WidgetsSettingsForm extends ConfigFormBase {
 
     $form['widgets_intro'] = [
       '#type' => 'item',
-      '#markup' => '<div class="subadmin-widgets-description"><p>' . $this->t('Selecciona los bloques que deseas colocar como widgets en el extremo derecho de la barra Subadmin Toolbar. Puedes configurar las opciones específicas de cada bloque desplegando el panel "Opciones".') . '</p></div>',
+      '#wrapper_attributes' => ['class' => ['subadmin-widgets-description']],
+      '#plain_text' => $this->t('Select the blocks to place as widgets at the right end of the Subadmin Toolbar. You can configure the specific options of each block in its "Options" panel.'),
     ];
 
     $form['widgets_wrapper'] = [
@@ -106,12 +124,12 @@ class WidgetsSettingsForm extends ConfigFormBase {
     $form['widgets_wrapper']['widgets'] = [
       '#type' => 'table',
       '#header' => [
-        $this->t('Bloque'),
-        $this->t('Configuración y opciones'),
-        $this->t('Peso'),
-        $this->t('Operaciones'),
+        $this->t('Block'),
+        $this->t('Configuration and options'),
+        $this->t('Weight'),
+        $this->t('Operations'),
       ],
-      '#empty' => $this->t('No hay widgets configurados. Haz clic en "Añadir widget" abajo.'),
+      '#empty' => $this->t('No widgets configured. Click "Add widget" below.'),
       '#tabledrag' => [
         [
           'action' => 'order',
@@ -135,10 +153,10 @@ class WidgetsSettingsForm extends ConfigFormBase {
 
       $form['widgets_wrapper']['widgets'][$index]['plugin_id'] = [
         '#type' => 'select',
-        '#title' => $this->t('Bloque'),
+        '#title' => $this->t('Block'),
         '#title_display' => 'invisible',
         '#options' => $block_options,
-        '#empty_option' => $this->t('- Seleccionar bloque -'),
+        '#empty_option' => $this->t('- Select block -'),
         '#default_value' => $plugin_id,
         '#ajax' => [
           'callback' => '::widgetsAjaxCallback',
@@ -148,7 +166,7 @@ class WidgetsSettingsForm extends ConfigFormBase {
 
       $form['widgets_wrapper']['widgets'][$index]['configuration'] = [
         '#type' => 'details',
-        '#title' => $this->t('Opciones'),
+        '#title' => $this->t('Options'),
         '#open' => TRUE,
       ];
 
@@ -159,10 +177,10 @@ class WidgetsSettingsForm extends ConfigFormBase {
 
       $form['widgets_wrapper']['widgets'][$index]['configuration']['status'] = [
         '#type' => 'select',
-        '#title' => $this->t('Estado'),
+        '#title' => $this->t('Status'),
         '#options' => [
-          'enabled' => $this->t('Activado'),
-          'disabled' => $this->t('Desactivado'),
+          'enabled' => $this->t('Enabled'),
+          'disabled' => $this->t('Disabled'),
         ],
         '#default_value' => $item['status'] ?? 'enabled',
         '#weight' => -20,
@@ -170,44 +188,39 @@ class WidgetsSettingsForm extends ConfigFormBase {
 
       $form['widgets_wrapper']['widgets'][$index]['configuration']['label'] = [
         '#type' => 'textfield',
-        '#title' => $this->t('Título personalizado (opcional)'),
+        '#title' => $this->t('Custom title (optional)'),
         '#default_value' => $item['label'] ?? '',
-        '#placeholder' => $this->t('Dejar vacío para usar el título predeterminado del bloque'),
+        '#placeholder' => $this->t("Leave empty to use the block's default title"),
         '#weight' => -18,
       ];
 
       $form['widgets_wrapper']['widgets'][$index]['configuration']['label_display'] = [
         '#type' => 'checkbox',
-        '#title' => $this->t('Mostrar título del bloque'),
+        '#title' => $this->t('Display block title'),
         '#default_value' => !empty($item['label_display']),
-        '#description' => $this->t('Por defecto en la barra de herramientas los títulos de los bloques suelen ocultarse.'),
+        '#description' => $this->t('Block titles are usually hidden in the toolbar.'),
         '#weight' => -16,
       ];
 
-      $default_roles = [];
-      if (!empty($item['roles']) && is_array($item['roles'])) {
-        foreach ($item['roles'] as $role) {
-          $default_roles[$role] = $role;
-        }
-      }
+      $default_roles = array_combine($item['roles'] ?? [], $item['roles'] ?? []);
 
       $form['widgets_wrapper']['widgets'][$index]['configuration']['roles'] = [
         '#type' => 'checkboxes',
-        '#title' => $this->t('Roles permitidos'),
+        '#title' => $this->t('Allowed roles'),
         '#options' => $role_options,
         '#default_value' => $default_roles,
-        '#description' => $this->t('Si no se selecciona ninguno, el bloque estará visible para todos los usuarios con acceso a la barra.'),
+        '#description' => $this->t('If no roles are selected, the block will be visible to all users with access to the toolbar.'),
         '#weight' => -10,
       ];
 
       // Formulario de configuración específico del plugin del bloque.
-      if (!empty($plugin_id) && $block_manager && $block_manager->hasDefinition($plugin_id)) {
+      if (!empty($plugin_id) && $this->blockManager->hasDefinition($plugin_id)) {
         try {
-          $block_instance = $block_manager->createInstance($plugin_id, $item['settings'] ?? []);
+          $block_instance = $this->blockManager->createInstance($plugin_id, $item['settings'] ?? []);
 
           $form['widgets_wrapper']['widgets'][$index]['configuration']['block_settings'] = [
             '#type' => 'fieldset',
-            '#title' => $this->t('Configuración del bloque (@label)', ['@label' => $block_instance->label()]),
+            '#title' => $this->t('Block configuration (@label)', ['@label' => $block_instance->label()]),
             '#parents' => ['widgets_wrapper', 'widgets', $index, 'configuration', 'block_settings'],
             '#tree' => TRUE,
             '#weight' => 20,
@@ -227,18 +240,22 @@ class WidgetsSettingsForm extends ConfigFormBase {
           else {
             $form['widgets_wrapper']['widgets'][$index]['configuration']['block_settings']['no_settings'] = [
               '#type' => 'item',
-              '#markup' => '<p class="description"><em>' . $this->t('Este bloque no tiene opciones de configuración adicionales.') . '</em></p>',
+              '#plain_text' => $this->t('This block has no additional configuration options.'),
             ];
           }
         }
         catch (\Throwable $e) {
-          // Si el bloque falla al instanciarse o renderizar su form, mantenemos el formulario estable.
+          // Keep the form usable if a block fails to build its settings form.
+          $this->logger->error('Settings form of block @plugin failed: @message', [
+            '@plugin' => $plugin_id,
+            '@message' => $e->getMessage(),
+          ]);
         }
       }
 
       $form['widgets_wrapper']['widgets'][$index]['weight'] = [
         '#type' => 'weight',
-        '#title' => $this->t('Peso'),
+        '#title' => $this->t('Weight'),
         '#title_display' => 'invisible',
         '#default_value' => $item['weight'] ?? $index,
         '#delta' => 100,
@@ -247,7 +264,7 @@ class WidgetsSettingsForm extends ConfigFormBase {
 
       $form['widgets_wrapper']['widgets'][$index]['operations'] = [
         '#type' => 'submit',
-        '#value' => $this->t('Eliminar'),
+        '#value' => $this->t('Remove'),
         '#name' => 'remove_widget_' . $item['id'],
         '#submit' => ['::removeWidgetSubmit'],
         '#ajax' => [
@@ -261,7 +278,7 @@ class WidgetsSettingsForm extends ConfigFormBase {
 
     $form['widgets_wrapper']['actions']['add'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Añadir widget'),
+      '#value' => $this->t('Add widget'),
       '#name' => 'add_widget_button',
       '#submit' => ['::addWidgetSubmit'],
       '#ajax' => [
@@ -278,7 +295,7 @@ class WidgetsSettingsForm extends ConfigFormBase {
   /**
    * Ajax callback for widget table operations.
    */
-  public function widgetsAjaxCallback(array &$form, FormStateInterface $form_state) {
+  public function widgetsAjaxCallback(array &$form, FormStateInterface $form_state): array {
     return $form['widgets_wrapper'];
   }
 
@@ -302,9 +319,6 @@ class WidgetsSettingsForm extends ConfigFormBase {
         $existing_by_id[$ew['id']] = $ew;
       }
     }
-
-    /** @var \Drupal\Core\Block\BlockManagerInterface|null $block_manager */
-    $block_manager = \Drupal::hasService('plugin.manager.block') ? \Drupal::service('plugin.manager.block') : NULL;
 
     $widgets = [];
     foreach ($submitted as $index => $row) {
@@ -333,9 +347,9 @@ class WidgetsSettingsForm extends ConfigFormBase {
       }
 
       // Si hay un plugin seleccionado, procesar su blockSubmit y configuraciones.
-      if (!empty($plugin_id) && $block_manager && $block_manager->hasDefinition($plugin_id)) {
+      if (!empty($plugin_id) && $this->blockManager->hasDefinition($plugin_id)) {
         try {
-          $plugin = $block_manager->createInstance($plugin_id, $settings);
+          $plugin = $this->blockManager->createInstance($plugin_id, $settings);
 
           if (!empty($form['widgets_wrapper']['widgets'][$index]['configuration']['block_settings'])) {
             $subform = &$form['widgets_wrapper']['widgets'][$index]['configuration']['block_settings'];
@@ -354,7 +368,11 @@ class WidgetsSettingsForm extends ConfigFormBase {
           }
         }
         catch (\Throwable $e) {
-          // Mantener configuración existente si falla.
+          // Keep the existing settings if the block fails.
+          $this->logger->error('Saving settings of block @plugin failed: @message', [
+            '@plugin' => $plugin_id,
+            '@message' => $e->getMessage(),
+          ]);
         }
       }
 
@@ -370,9 +388,7 @@ class WidgetsSettingsForm extends ConfigFormBase {
       ];
     }
 
-    usort($widgets, function ($a, $b) {
-      return ($a['weight'] ?? 0) <=> ($b['weight'] ?? 0);
-    });
+    usort($widgets, fn(array $a, array $b) => $a['weight'] <=> $b['weight']);
 
     return $widgets;
   }
@@ -380,7 +396,7 @@ class WidgetsSettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
+  public function validateForm(array &$form, FormStateInterface $form_state): void {
     parent::validateForm($form, $form_state);
 
     $triggering_element = $form_state->getTriggeringElement();
@@ -396,32 +412,32 @@ class WidgetsSettingsForm extends ConfigFormBase {
       return;
     }
 
-    /** @var \Drupal\Core\Block\BlockManagerInterface|null $block_manager */
-    $block_manager = \Drupal::hasService('plugin.manager.block') ? \Drupal::service('plugin.manager.block') : NULL;
-
     foreach ($submitted as $index => $row) {
       $plugin_id = $row['plugin_id'] ?? '';
       if (empty($plugin_id)) {
         $form_state->setErrorByName(
           "widgets_wrapper][widgets][$index][plugin_id",
-          $this->t('Debes seleccionar un bloque para cada widget o eliminar la fila.')
+          $this->t('You must select a block for each widget or remove the row.')
         );
         continue;
       }
 
-      if ($block_manager && $block_manager->hasDefinition($plugin_id)) {
+      if ($this->blockManager->hasDefinition($plugin_id)) {
         if (isset($form['widgets_wrapper']['widgets'][$index]['configuration']['block_settings'])) {
           try {
             $existing_widgets = $form_state->get('widgets') ?: [];
             $settings = $existing_widgets[$index]['settings'] ?? [];
-            $plugin = $block_manager->createInstance($plugin_id, $settings);
+            $plugin = $this->blockManager->createInstance($plugin_id, $settings);
 
             $subform = &$form['widgets_wrapper']['widgets'][$index]['configuration']['block_settings'];
             $subform_state = SubformState::createForSubform($subform, $form, $form_state);
             $plugin->blockValidate($subform, $subform_state);
           }
           catch (\Throwable $e) {
-            // Ignorar errores internos de plugins si no son críticos.
+            $this->logger->error('Validating settings of block @plugin failed: @message', [
+              '@plugin' => $plugin_id,
+              '@message' => $e->getMessage(),
+            ]);
           }
         }
       }
@@ -431,7 +447,7 @@ class WidgetsSettingsForm extends ConfigFormBase {
   /**
    * Submit callback for adding a widget.
    */
-  public function addWidgetSubmit(array &$form, FormStateInterface $form_state) {
+  public function addWidgetSubmit(array &$form, FormStateInterface $form_state): void {
     $widgets = $this->updateWidgetsFromSubmittedValues($form_state, $form);
     $widgets[] = [
       'id' => 'widget_' . uniqid(),
@@ -444,9 +460,7 @@ class WidgetsSettingsForm extends ConfigFormBase {
       'settings' => [],
     ];
 
-    $user_input = $form_state->getUserInput();
-    unset($user_input['widgets_wrapper']);
-    $form_state->setUserInput($user_input);
+    $this->resetSubmittedInput($form_state, 'widgets_wrapper');
 
     $form_state->set('widgets', $widgets);
     $form_state->setRebuild();
@@ -455,38 +469,14 @@ class WidgetsSettingsForm extends ConfigFormBase {
   /**
    * Submit callback for removing a widget.
    */
-  public function removeWidgetSubmit(array &$form, FormStateInterface $form_state) {
-    $user_input = $form_state->getUserInput();
-    $triggering_element = $form_state->getTriggeringElement();
-    $removed_id = NULL;
+  public function removeWidgetSubmit(array &$form, FormStateInterface $form_state): void {
+    $removed_id = substr($form_state->getTriggeringElement()['#name'], strlen('remove_widget_'));
+    $widgets = array_values(array_filter(
+      $this->updateWidgetsFromSubmittedValues($form_state, $form),
+      fn(array $widget) => $widget['id'] !== $removed_id,
+    ));
 
-    if (isset($triggering_element['#name']) && strpos($triggering_element['#name'], 'remove_widget_') === 0) {
-      $removed_id = substr($triggering_element['#name'], strlen('remove_widget_'));
-    }
-
-    if (!$removed_id && is_array($user_input)) {
-      foreach ($user_input as $key => $value) {
-        if (strpos($key, 'remove_widget_') === 0) {
-          $removed_id = substr($key, strlen('remove_widget_'));
-          break;
-        }
-      }
-    }
-
-    $widgets = $this->updateWidgetsFromSubmittedValues($form_state, $form);
-
-    if ($removed_id) {
-      foreach ($widgets as $k => $v) {
-        if ($v['id'] === $removed_id) {
-          unset($widgets[$k]);
-        }
-      }
-      $widgets = array_values($widgets);
-    }
-
-    $user_input = $form_state->getUserInput();
-    unset($user_input['widgets_wrapper']);
-    $form_state->setUserInput($user_input);
+    $this->resetSubmittedInput($form_state, 'widgets_wrapper');
 
     $form_state->set('widgets', $widgets);
     $form_state->setRebuild();
@@ -495,7 +485,7 @@ class WidgetsSettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state): void {
     $widgets = $this->updateWidgetsFromSubmittedValues($form_state, $form);
 
     $this->config('subadmin_toolbar.settings')
