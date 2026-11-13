@@ -43,7 +43,8 @@ Navigate to:
 - **General Settings & Appearance:** `/admin/config/user-interface/subadmin-toolbar`
   - Set toolbar brand title, logo/icon, accent color, and enable/disable Font Awesome.
 - **Links & Hierarchy Builder:** `/admin/config/user-interface/subadmin-toolbar/links`
-  - Drag rows to reorder or nest them; each row has its own icon, URL and role restrictions.
+  - Drag the handle of a row to reorder it; move sideways while dragging to change its level. Branches can be collapsed, the list can be filtered, and with the keyboard you can focus a handle and use the arrow keys to move or indent a link.
+  - Each row has its own icon, URL and role restrictions.
 - **Widgets:** `/admin/config/user-interface/subadmin-toolbar/widgets`
   - Place any block as a widget on the right end of the toolbar.
 
