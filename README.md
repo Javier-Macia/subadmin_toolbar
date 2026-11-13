@@ -40,10 +40,16 @@ drush en subadmin_toolbar_local_material_icons -y
 ## Configuration
 
 Navigate to:
-- **General Settings & Appearance:** `/admin/config/user-interface/subadmin-toolbar/general`
+- **General Settings & Appearance:** `/admin/config/user-interface/subadmin-toolbar`
   - Set toolbar brand title, logo/icon, accent color, and enable/disable Font Awesome.
 - **Links & Hierarchy Builder:** `/admin/config/user-interface/subadmin-toolbar/links`
-  - Toggle between the **Modern Visual Builder** (interactive drag & drop) and the **Classic Table** view.
+  - Drag rows to reorder or nest them; each row has its own icon, URL and role restrictions.
+- **Widgets:** `/admin/config/user-interface/subadmin-toolbar/widgets`
+  - Place any block as a widget on the right end of the toolbar.
+
+Finally, grant the **Access the Subadmin Toolbar** permission to the roles that should see it.
+
+Link URLs must start with `/` (internal path) or be a valid external URL; unsafe protocols such as `javascript:` are rejected.
 
 ## License
 
