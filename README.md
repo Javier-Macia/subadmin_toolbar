@@ -17,6 +17,8 @@ It provides a clean, distraction-free horizontal top toolbar with nested dropdow
   - `subadmin_toolbar_local_fontawesome`: Automatically switches the toolbar from Cloudflare CDN to local fonts if `native_fontawesome` is installed.
 - **Brand Customization:** Custom logo/icon upload, accent colors, and custom brand link.
 
+  - `subadmin_toolbar_subroles`: if you use the `subroles` module, links and widgets get an "Allowed subroles" setting. An item is visible to users with one of its roles or one of its subroles (a subrole only counts while the user has its parent role). If an item has subroles and no roles, only the users with those subroles see it.
+
 ## Requirements
 
 - Drupal 10.3+, 11 or 12.
@@ -55,3 +57,7 @@ Link URLs must start with `/` (internal path) or be a valid external URL; unsafe
 ## License
 
 - GNU General Public License v2.0 or later (GPL-2.0-or-later).
+
+## Extending
+
+Other modules can add their own settings to links and widgets and take part in their visibility. See `subadmin_toolbar.api.php` for `hook_subadmin_toolbar_item_configuration_alter()`, `hook_subadmin_toolbar_item_values_alter()` and `hook_subadmin_toolbar_item_visibility_alter()`; `subadmin_toolbar_subroles` is a working example.
