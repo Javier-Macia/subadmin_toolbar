@@ -20,6 +20,7 @@ admin_form:
   dependencies:
     - core/drupalSettings
     - core/once
+    - core/drupal.dialog
     - core/drupal.dialog.ajax
     - subadmin_toolbar/material_icons
 
