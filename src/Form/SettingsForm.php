@@ -1,69 +1,78 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\subadmin_toolbar\Form;
 
-use Drupal\Core\Form\ConfigFormBase;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\TypedConfigManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\user\Entity\Role;
+use Drupal\Core\Render\RendererInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Configure Subadmin Toolbar settings for this site.
+ * Configure the menu links of the Subadmin Toolbar.
  */
-class SettingsForm extends ConfigFormBase {
+class SettingsForm extends ToolbarFormBase {
+
+  /**
+   * Maximum nesting depth when drawing the tabledrag indentation.
+   */
+  protected const MAX_DEPTH = 20;
+
+  public function __construct(
+    ConfigFactoryInterface $config_factory,
+    TypedConfigManagerInterface $typed_config_manager,
+    EntityTypeManagerInterface $entity_type_manager,
+    ModuleHandlerInterface $module_handler,
+    protected RendererInterface $renderer,
+  ) {
+    parent::__construct($config_factory, $typed_config_manager, $entity_type_manager, $module_handler);
+  }
 
   /**
    * {@inheritdoc}
    */
-  protected function getEditableConfigNames() {
+  public static function create(ContainerInterface $container): static {
+    return new static(
+      $container->get('config.factory'),
+      $container->get('config.typed'),
+      $container->get('entity_type.manager'),
+      $container->get('module_handler'),
+      $container->get('renderer'),
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getEditableConfigNames(): array {
     return ['subadmin_toolbar.settings'];
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getFormId() {
+  public function getFormId(): string {
     return 'subadmin_toolbar_settings_form';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
-    $config = $this->config('subadmin_toolbar.settings');
-    
-    $roles = Role::loadMultiple();
-    $role_options = [];
-    foreach ($roles as $role) {
-      if ($role->id() === 'anonymous') {
-        continue;
-      }
-      $role_options[$role->id()] = $role->label();
-    }
-    
+  public function buildForm(array $form, FormStateInterface $form_state): array {
+    $role_options = $this->getRoleOptions();
+
     $links = $form_state->get('links');
     if ($links === NULL) {
-      $links = $config->get('links') ?: [];
+      $links = $this->config('subadmin_toolbar.settings')->get('links') ?: [];
       $form_state->set('links', $links);
     }
 
-    $general_config = $this->config('subadmin_toolbar.general');
-    $enable_fontawesome = (bool) ($general_config->get('enable_font_awesome') ?? FALSE);
-
-    $icon_type_options = [
-      'material-symbols-outlined' => (string) $this->t('Material Symbols Outlined'),
-      'material-icons' => (string) $this->t('Material Icons'),
-      'material-icons-outlined' => (string) $this->t('Material Icons Outlined'),
-      'material-icons-round' => (string) $this->t('Material Icons Round'),
-      'material-icons-sharp' => (string) $this->t('Material Icons Sharp'),
-      'material-icons-two-tone' => (string) $this->t('Material Icons Two-Tone'),
-    ];
-
-    if ($enable_fontawesome) {
-      $icon_type_options['fas'] = (string) $this->t('FontAwesome Solid (fas)');
-      $icon_type_options['fab'] = (string) $this->t('FontAwesome Brands (fab)');
-    }
-
-    \Drupal::moduleHandler()->alter('subadmin_toolbar_icon_types', $icon_type_options);
+    $enable_fontawesome = (bool) $this->config('subadmin_toolbar.general')->get('enable_font_awesome');
+    $icon_type_options = $this->getIconTypeOptions($enable_fontawesome);
 
     $form['#attached']['library'][] = 'core/drupal.dialog.ajax';
     $form['#attached']['library'][] = 'subadmin_toolbar/admin_form';
@@ -104,111 +113,82 @@ class SettingsForm extends ConfigFormBase {
         ],
       ],
     ];
-    
+
+    $parent_by_id = [];
+    foreach ($links as $link) {
+      if (!empty($link['id'])) {
+        $parent_by_id[$link['id']] = $link['pid'] ?? '';
+      }
+    }
+
     foreach ($links as $index => $item) {
       if (empty($item['id'])) {
-        $item['id'] = 'link_' . uniqid();
+        $item['id'] = $this->generateId();
       }
 
-      // Calculate depth for tabledrag visual indentation
-      $depth = 0;
-      $current_pid = $item['pid'] ?? '';
-      $loop_prevent = 0;
-      while (!empty($current_pid) && $loop_prevent < 20) {
-        $depth++;
-        $found = false;
-        foreach ($links as $p_item) {
-          if (($p_item['id'] ?? '') === $current_pid) {
-            $current_pid = $p_item['pid'] ?? '';
-            $found = true;
-            break;
-          }
-        }
-        if (!$found) break;
-        $loop_prevent++;
-      }
-      
-      $indentation = '';
-      if ($depth > 0) {
-        $indent = [
-          '#theme' => 'indentation',
-          '#size' => $depth,
-        ];
-        $indentation = (string) \Drupal::service('renderer')->renderPlain($indent);
-      }
-
-      $form['links_wrapper']['links'][$index] = [
+      $row = &$form['links_wrapper']['links'][$index];
+      $row = [
         '#attributes' => ['class' => ['draggable']],
         '#weight' => $item['weight'] ?? $index,
       ];
-      
-      $form['links_wrapper']['links'][$index]['title'] = [
-        '#prefix' => $indentation,
+
+      $row['title'] = [
+        '#prefix' => $this->buildIndentation($item['pid'] ?? '', $parent_by_id),
         '#type' => 'textfield',
         '#title' => $this->t('Title'),
         '#title_display' => 'invisible',
         '#default_value' => $item['title'] ?? '',
         '#placeholder' => $this->t('Link Title'),
       ];
-      
-      // Configuration details wrapper
-      $form['links_wrapper']['links'][$index]['configuration'] = [
+
+      $row['configuration'] = [
         '#type' => 'details',
         '#title' => $this->t('Settings'),
         '#open' => empty($item['title']),
+        'id' => [
+          '#type' => 'hidden',
+          '#default_value' => $item['id'],
+          '#attributes' => ['class' => ['link-id']],
+        ],
+        'pid' => [
+          '#type' => 'hidden',
+          '#default_value' => $item['pid'] ?? '',
+          '#attributes' => ['class' => ['link-pid']],
+        ],
+        'status' => [
+          '#type' => 'hidden',
+          '#default_value' => $item['status'] ?? 'enabled',
+          '#attributes' => ['class' => ['link-status']],
+        ],
+        'url' => [
+          '#type' => 'textfield',
+          '#title' => $this->t('URL'),
+          '#default_value' => $item['url'] ?? '',
+          '#placeholder' => $this->t('e.g., /node/add'),
+          '#description' => $this->t('Drupal path starting with "/" or full URL. Leave empty for parent container.'),
+        ],
+        'icon_type' => [
+          '#type' => 'select',
+          '#title' => $this->t('Icon Font Family'),
+          '#options' => $icon_type_options,
+          '#default_value' => $item['icon_type'] ?? 'material-symbols-outlined',
+        ],
+        'icon' => [
+          '#type' => 'textfield',
+          '#title' => $this->t('Icon Name'),
+          '#default_value' => $item['icon'] ?? '',
+          '#placeholder' => $this->t('e.g., settings (or fa-cog)'),
+        ],
+        'roles' => [
+          '#type' => 'checkboxes',
+          '#title' => $this->t('Allowed Roles'),
+          '#options' => $role_options,
+          '#default_value' => array_combine($item['roles'] ?? [], $item['roles'] ?? []),
+          '#description' => $this->t('If no roles are selected, the link will be visible to all authorized users.'),
+        ],
       ];
 
-      $form['links_wrapper']['links'][$index]['configuration']['id'] = [
-        '#type' => 'hidden',
-        '#default_value' => $item['id'],
-        '#attributes' => ['class' => ['link-id']],
-      ];
-      $form['links_wrapper']['links'][$index]['configuration']['pid'] = [
-        '#type' => 'hidden',
-        '#default_value' => $item['pid'] ?? '',
-        '#attributes' => ['class' => ['link-pid']],
-      ];
-      $form['links_wrapper']['links'][$index]['configuration']['status'] = [
-        '#type' => 'hidden',
-        '#default_value' => $item['status'] ?? 'enabled',
-        '#attributes' => ['class' => ['link-status']],
-      ];
-      $form['links_wrapper']['links'][$index]['configuration']['url'] = [
-        '#type' => 'textfield',
-        '#title' => $this->t('URL'),
-        '#default_value' => $item['url'] ?? '',
-        '#placeholder' => $this->t('e.g., /node/add'),
-        '#description' => $this->t('Drupal path or full URL. Leave empty for parent container.'),
-      ];
-      $form['links_wrapper']['links'][$index]['configuration']['icon_type'] = [
-        '#type' => 'select',
-        '#title' => $this->t('Icon Font Family'),
-        '#options' => $icon_type_options,
-        '#default_value' => $item['icon_type'] ?? 'material-symbols-outlined',
-      ];
-      $form['links_wrapper']['links'][$index]['configuration']['icon'] = [
-        '#type' => 'textfield',
-        '#title' => $this->t('Icon Name'),
-        '#default_value' => $item['icon'] ?? '',
-        '#placeholder' => $this->t('e.g., settings (or fa-cog)'),
-      ];
-      
-      $default_roles = [];
-      if (!empty($item['roles']) && is_array($item['roles'])) {
-        foreach ($item['roles'] as $role) {
-          $default_roles[$role] = $role;
-        }
-      }
-
-      $form['links_wrapper']['links'][$index]['configuration']['roles'] = [
-        '#type' => 'checkboxes',
-        '#title' => $this->t('Allowed Roles'),
-        '#options' => $role_options,
-        '#default_value' => $default_roles,
-        '#description' => $this->t('If no roles are selected, the link will be visible to all authorized users.'),
-      ];
-      
-      $form['links_wrapper']['links'][$index]['weight'] = [
+      $row['weight'] = [
         '#type' => 'weight',
         '#title' => $this->t('Weight for @title', ['@title' => $item['title'] ?? 'New link']),
         '#title_display' => 'invisible',
@@ -216,8 +196,8 @@ class SettingsForm extends ConfigFormBase {
         '#delta' => 100,
         '#attributes' => ['class' => ['link-weight']],
       ];
-      
-      $form['links_wrapper']['links'][$index]['operations'] = [
+
+      $row['operations'] = [
         '#type' => 'submit',
         '#value' => $this->t('Remove'),
         '#name' => 'remove_link_' . $item['id'],
@@ -229,8 +209,9 @@ class SettingsForm extends ConfigFormBase {
         '#limit_validation_errors' => [['links_wrapper']],
         '#attributes' => ['class' => ['subadmin-btn-remove-row']],
       ];
+      unset($row);
     }
-    
+
     $form['links_wrapper']['actions']['add'] = [
       '#type' => 'submit',
       '#value' => $this->t('Add link'),
@@ -247,80 +228,124 @@ class SettingsForm extends ConfigFormBase {
     return parent::buildForm($form, $form_state);
   }
 
-  public function linksAjaxCallback(array &$form, FormStateInterface $form_state) {
+  /**
+   * Ajax callback for the link table operations.
+   */
+  public function linksAjaxCallback(array &$form, FormStateInterface $form_state): array {
     return $form['links_wrapper'];
   }
 
-  protected function updateLinksFromSubmittedValues(FormStateInterface $form_state) {
-    $submitted = $form_state->getValue(['links_wrapper', 'links']);
-    if (!is_array($submitted)) {
-      $submitted = [];
+  /**
+   * Returns the icon families available in the link form.
+   */
+  protected function getIconTypeOptions(bool $enable_fontawesome): array {
+    $options = [
+      'material-symbols-outlined' => (string) $this->t('Material Symbols Outlined'),
+      'material-icons' => (string) $this->t('Material Icons'),
+      'material-icons-outlined' => (string) $this->t('Material Icons Outlined'),
+      'material-icons-round' => (string) $this->t('Material Icons Round'),
+      'material-icons-sharp' => (string) $this->t('Material Icons Sharp'),
+      'material-icons-two-tone' => (string) $this->t('Material Icons Two-Tone'),
+    ];
+    if ($enable_fontawesome) {
+      $options['fas'] = (string) $this->t('FontAwesome Solid (fas)');
+      $options['fab'] = (string) $this->t('FontAwesome Brands (fab)');
     }
-    
+    $this->moduleHandler->alter('subadmin_toolbar_icon_types', $options);
+    return $options;
+  }
+
+  /**
+   * Renders the tabledrag indentation for the given parent chain.
+   *
+   * @param string $pid
+   *   The parent ID of the row.
+   * @param string[] $parent_by_id
+   *   Parent ID of every link, keyed by link ID.
+   */
+  protected function buildIndentation(string $pid, array $parent_by_id): string {
+    $depth = 0;
+    while ($pid !== '' && isset($parent_by_id[$pid]) && $depth < self::MAX_DEPTH) {
+      $depth++;
+      $pid = $parent_by_id[$pid];
+    }
+    if (!$depth) {
+      return '';
+    }
+    $indent = ['#theme' => 'indentation', '#size' => $depth];
+    return (string) $this->renderer->renderInIsolation($indent);
+  }
+
+  /**
+   * Generates an ID for a new link.
+   */
+  protected function generateId(): string {
+    return 'link_' . uniqid();
+  }
+
+  /**
+   * Normalizes the submitted rows into the stored structure.
+   */
+  protected function updateLinksFromSubmittedValues(FormStateInterface $form_state): array {
+    $submitted = $form_state->getValue(['links_wrapper', 'links']);
     $links = [];
-    foreach ($submitted as $index => $item) {
-      if (is_numeric($index)) {
-        $config = $item['configuration'] ?? [];
-        $roles = isset($config['roles']) ? array_filter($config['roles']) : [];
-        $links[] = [
-          'id' => $config['id'] ?? '',
-          'pid' => $config['pid'] ?? '',
-          'status' => $config['status'] ?? 'enabled',
-          'title' => $item['title'] ?? '',
-          'url' => $config['url'] ?? '',
-          'icon_type' => $config['icon_type'] ?? '',
-          'icon' => $config['icon'] ?? '',
-          'roles' => array_values($roles),
-          'weight' => $item['weight'] ?? 0,
-        ];
+    foreach (is_array($submitted) ? $submitted : [] as $index => $item) {
+      if (!is_numeric($index)) {
+        continue;
       }
+      $config = $item['configuration'] ?? [];
+      $links[] = [
+        'id' => $config['id'] ?? '',
+        'pid' => $config['pid'] ?? '',
+        'status' => $config['status'] ?? 'enabled',
+        'title' => $item['title'] ?? '',
+        'url' => trim($config['url'] ?? ''),
+        'icon_type' => $config['icon_type'] ?? '',
+        'icon' => $config['icon'] ?? '',
+        'roles' => array_values(array_filter($config['roles'] ?? [])),
+        'weight' => (int) ($item['weight'] ?? 0),
+      ];
     }
 
-    
-    // Sort links hierarchically and by weight so AJAX rebuilds maintain tree
+    // Keep the tree order so AJAX rebuilds don't lose the hierarchy, and keep
+    // the typed values so they survive the rebuild.
     $links = $this->sortLinksTree($links);
-    
-    // Update the state with current values so we don't lose typed text
     $form_state->set('links', $links);
     return $links;
   }
 
   /**
-   * Sorts a flat array of links into a flat array ordered hierarchically.
+   * Sorts a flat list of links hierarchically and by weight.
    */
-  protected function sortLinksTree(array $links) {
-    if (empty($links)) {
-      return [];
-    }
-    
-    $tree = [];
+  protected function sortLinksTree(array $links): array {
+    $children = [];
     foreach ($links as $link) {
-      $pid = $link['pid'] ?? '';
-      $tree[$pid][] = $link;
+      $children[$link['pid'] ?? ''][] = $link;
     }
-    
-    $flat_links = [];
-    $process_level = function($pid) use (&$tree, &$flat_links, &$process_level) {
-      if (isset($tree[$pid])) {
-        $level = $tree[$pid];
-        usort($level, function($a, $b) {
-          return ($a['weight'] ?? 0) <=> ($b['weight'] ?? 0);
-        });
-        foreach ($level as $item) {
-          $flat_links[] = $item;
-          $process_level($item['id']);
-        }
+
+    $sorted = [];
+    $visit = function (string $pid) use (&$visit, &$children, &$sorted): void {
+      $level = $children[$pid] ?? [];
+      // Each branch is visited once, which also guards against cycles.
+      unset($children[$pid]);
+      usort($level, fn(array $a, array $b) => ($a['weight'] ?? 0) <=> ($b['weight'] ?? 0));
+      foreach ($level as $item) {
+        $sorted[] = $item;
+        $visit((string) $item['id']);
       }
     };
-    $process_level('');
-    
-    return $flat_links;
+    $visit('');
+
+    return $sorted;
   }
 
-  public function addLinkSubmit(array &$form, FormStateInterface $form_state) {
+  /**
+   * Submit callback for adding a link.
+   */
+  public function addLinkSubmit(array &$form, FormStateInterface $form_state): void {
     $links = $this->updateLinksFromSubmittedValues($form_state);
     $links[] = [
-      'id' => 'link_' . uniqid(),
+      'id' => $this->generateId(),
       'pid' => '',
       'status' => 'enabled',
       'title' => '',
@@ -330,63 +355,33 @@ class SettingsForm extends ConfigFormBase {
       'roles' => [],
       'weight' => count($links),
     ];
-    
-    // Limpiar el user_input para que FormBuilder use los nuevos #default_value
-    $user_input = $form_state->getUserInput();
-    unset($user_input['links_wrapper']);
-    $form_state->setUserInput($user_input);
 
+    $this->resetSubmittedInput($form_state, 'links_wrapper');
     $form_state->set('links', $links);
     $form_state->setRebuild();
   }
 
-  public function removeLinkSubmit(array &$form, FormStateInterface $form_state) {
-    $user_input = $form_state->getUserInput();
-    $triggering_element = $form_state->getTriggeringElement();
-    
-    // Obtener el ID único del enlace directamente desde el nombre del botón activado
-    $removed_id = NULL;
-    
-    if (isset($triggering_element['#name']) && strpos($triggering_element['#name'], 'remove_link_') === 0) {
-      $removed_id = substr($triggering_element['#name'], strlen('remove_link_'));
-    }
-    
-    if (!$removed_id && is_array($user_input)) {
-      foreach ($user_input as $key => $value) {
-        if (strpos($key, 'remove_link_') === 0) {
-          $removed_id = substr($key, strlen('remove_link_'));
-          break;
-        }
-      }
-    }
-    
-    // Fallback mediante la estructura de padres
-    if (!$removed_id) {
-      $parents = $triggering_element['#array_parents'] ?? $triggering_element['#parents'] ?? [];
-      $row_key = $parents[2] ?? NULL;
-      $submitted = $form_state->getValue(['links_wrapper', 'links']);
-      if ($row_key !== NULL && isset($submitted[$row_key]['configuration']['id'])) {
-        $removed_id = $submitted[$row_key]['configuration']['id'];
-      }
-    }
-
+  /**
+   * Submit callback for removing a link and all of its descendants.
+   */
+  public function removeLinkSubmit(array &$form, FormStateInterface $form_state): void {
+    $removed = [substr($form_state->getTriggeringElement()['#name'], strlen('remove_link_'))];
     $links = $this->updateLinksFromSubmittedValues($form_state);
-    
-    if ($removed_id) {
-      foreach ($links as $k => $v) {
-        if ($v['id'] === $removed_id || $v['pid'] === $removed_id) {
-          unset($links[$k]);
+
+    // Collect the removed link and its descendants.
+    do {
+      $found = FALSE;
+      foreach ($links as $link) {
+        if (in_array($link['pid'], $removed, TRUE) && !in_array($link['id'], $removed, TRUE)) {
+          $removed[] = $link['id'];
+          $found = TRUE;
         }
       }
-      $links = array_values($links);
-    }
-    
-    // Limpiar el user_input de la tabla de enlaces para obligar a FormBuilder 
-    // a usar los valores actualizados de $links (#default_value) y no los valores enviados previamente.
-    $user_input = $form_state->getUserInput();
-    unset($user_input['links_wrapper']);
-    $form_state->setUserInput($user_input);
+    } while ($found);
 
+    $links = array_values(array_filter($links, fn(array $link) => !in_array($link['id'], $removed, TRUE)));
+
+    $this->resetSubmittedInput($form_state, 'links_wrapper');
     $form_state->set('links', $links);
     $form_state->setRebuild();
   }
@@ -394,15 +389,32 @@ class SettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
-    $links = $this->updateLinksFromSubmittedValues($form_state);
+  public function validateForm(array &$form, FormStateInterface $form_state): void {
+    parent::validateForm($form, $form_state);
 
+    // Only validate the URLs when saving, not on the add/remove AJAX actions.
+    if (($form_state->getTriggeringElement()['#name'] ?? '') !== 'op') {
+      return;
+    }
+    foreach ($form_state->getValue(['links_wrapper', 'links']) ?? [] as $index => $item) {
+      if (!$this->isValidUrl(trim($item['configuration']['url'] ?? ''))) {
+        $form_state->setErrorByName(
+          "links_wrapper][links][$index][configuration][url",
+          $this->t('The URL of %title must start with "/" or be a valid external URL.', ['%title' => $item['title'] ?? ''])
+        );
+      }
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state): void {
     $this->config('subadmin_toolbar.settings')
-      ->set('links', $links)
+      ->set('links', $this->updateLinksFromSubmittedValues($form_state))
       ->save();
 
     parent::submitForm($form, $form_state);
   }
 
 }
-
