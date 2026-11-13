@@ -204,16 +204,17 @@ class WidgetsSettingsForm extends ToolbarFormBase {
 
       $default_roles = array_combine($item['roles'] ?? [], $item['roles'] ?? []);
 
-      $form['widgets_wrapper']['widgets'][$index]['configuration']['roles'] = [
+      $form['widgets_wrapper']['widgets'][$index]['configuration']['roles'] = $this->markEditorGroup([
         '#type' => 'checkboxes',
         '#title' => $this->t('Allowed roles'),
         '#options' => $role_options,
         '#default_value' => $default_roles,
         '#description' => $this->t('If no roles are selected, the block will be visible to all users with access to the toolbar.'),
         '#weight' => -10,
-      ];
+      ], 'roles');
+      $this->alterItemConfiguration($form['widgets_wrapper']['widgets'][$index]['configuration'], $item, 'widget');
 
-      // Formulario de configuración específico del plugin del bloque.
+      // Settings form of the block plugin.
       if (!empty($plugin_id) && $this->blockManager->hasDefinition($plugin_id)) {
         try {
           $block_instance = $this->blockManager->createInstance($plugin_id, $item['settings'] ?? []);
@@ -376,7 +377,7 @@ class WidgetsSettingsForm extends ToolbarFormBase {
         }
       }
 
-      $widgets[] = [
+      $widget = [
         'id' => $id,
         'plugin_id' => $plugin_id,
         'label' => $label,
@@ -386,6 +387,8 @@ class WidgetsSettingsForm extends ToolbarFormBase {
         'weight' => $weight,
         'settings' => $settings,
       ];
+      $this->alterItemValues($widget, $row['configuration'], 'widget');
+      $widgets[] = $widget;
     }
 
     usort($widgets, fn(array $a, array $b) => $a['weight'] <=> $b['weight']);

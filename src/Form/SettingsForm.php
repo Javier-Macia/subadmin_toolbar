@@ -179,14 +179,15 @@ class SettingsForm extends ToolbarFormBase {
           '#default_value' => $item['icon'] ?? '',
           '#placeholder' => $this->t('e.g., settings (or fa-cog)'),
         ],
-        'roles' => [
+        'roles' => $this->markEditorGroup([
           '#type' => 'checkboxes',
           '#title' => $this->t('Allowed Roles'),
           '#options' => $role_options,
           '#default_value' => array_combine($item['roles'] ?? [], $item['roles'] ?? []),
           '#description' => $this->t('If no roles are selected, the link will be visible to all authorized users.'),
-        ],
+        ], 'roles'),
       ];
+      $this->alterItemConfiguration($row['configuration'], $item, 'link');
 
       $row['weight'] = [
         '#type' => 'weight',
@@ -294,7 +295,7 @@ class SettingsForm extends ToolbarFormBase {
         continue;
       }
       $config = $item['configuration'] ?? [];
-      $links[] = [
+      $link = [
         'id' => $config['id'] ?? '',
         'pid' => $config['pid'] ?? '',
         'status' => $config['status'] ?? 'enabled',
@@ -305,6 +306,8 @@ class SettingsForm extends ToolbarFormBase {
         'roles' => array_values(array_filter($config['roles'] ?? [])),
         'weight' => (int) ($item['weight'] ?? 0),
       ];
+      $this->alterItemValues($link, $config, 'link');
+      $links[] = $link;
     }
 
     // Keep the tree order so AJAX rebuilds don't lose the hierarchy, and keep

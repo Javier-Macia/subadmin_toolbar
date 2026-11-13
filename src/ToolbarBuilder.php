@@ -10,6 +10,7 @@ use Drupal\Core\Block\BlockManagerInterface;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\File\FileUrlGeneratorInterface;
 use Drupal\Core\Plugin\Context\ContextHandlerInterface;
 use Drupal\Core\Plugin\Context\ContextRepositoryInterface;
@@ -37,6 +38,7 @@ class ToolbarBuilder {
     protected FileUrlGeneratorInterface $fileUrlGenerator,
     protected EntityTypeManagerInterface $entityTypeManager,
     protected LoggerInterface $logger,
+    protected ModuleHandlerInterface $moduleHandler,
   ) {}
 
   /**
@@ -62,14 +64,16 @@ class ToolbarBuilder {
     $config = $this->configFactory->get('subadmin_toolbar.settings');
     $roles = $this->currentUser->getRoles();
 
-    $links = $this->buildLinks($config->get('links') ?: [], $roles);
-    $widgets = $this->buildWidgets($config->get('widgets') ?: [], $roles);
+    // Collects what other modules' visibility rules depend on.
+    $metadata = CacheableMetadata::createFromRenderArray($build);
+    $links = $this->buildLinks($config->get('links') ?: [], $roles, $metadata);
+    $widgets = $this->buildWidgets($config->get('widgets') ?: [], $roles, $metadata);
     if (!$links && !$widgets) {
+      $metadata->applyTo($build);
       return $build;
     }
 
     $general = $this->configFactory->get('subadmin_toolbar.general');
-    $metadata = CacheableMetadata::createFromRenderArray($build);
 
     $icon_url = NULL;
     if ($fid = $general->get('toolbar_icon')) {
@@ -106,23 +110,28 @@ class ToolbarBuilder {
   }
 
   /**
-   * Whether an item is enabled and allowed for the given roles.
+   * Whether an item is enabled and allowed for the current user.
+   *
+   * Other modules can refine the role check, which is made for the current
+   * user, with hook_subadmin_toolbar_item_visibility_alter().
    */
-  protected function isVisible(array $item, array $user_roles): bool {
+  protected function isVisible(array $item, array $user_roles, CacheableMetadata $cacheability): bool {
     if (($item['status'] ?? 'enabled') === 'disabled') {
       return FALSE;
     }
     $allowed_roles = array_filter($item['roles'] ?? []);
-    return !$allowed_roles || array_intersect($allowed_roles, $user_roles);
+    $visible = !$allowed_roles || array_intersect($allowed_roles, $user_roles);
+    $this->moduleHandler->alter('subadmin_toolbar_item_visibility', $visible, $item, $cacheability);
+    return (bool) $visible;
   }
 
   /**
    * Filters the stored links by role and arranges them as a tree.
    */
-  protected function buildLinks(array $stored_links, array $user_roles): array {
+  protected function buildLinks(array $stored_links, array $user_roles, CacheableMetadata $cacheability): array {
     $links = [];
     foreach ($stored_links as $index => $link) {
-      if (empty($link['title']) || !$this->isVisible($link, $user_roles)) {
+      if (empty($link['title']) || !$this->isVisible($link, $user_roles, $cacheability)) {
         continue;
       }
       $id = !empty($link['id']) ? $link['id'] : 'link_' . $index;
@@ -159,10 +168,10 @@ class ToolbarBuilder {
   /**
    * Renders the widgets visible to the given roles.
    */
-  protected function buildWidgets(array $stored_widgets, array $user_roles): array {
+  protected function buildWidgets(array $stored_widgets, array $user_roles, CacheableMetadata $cacheability): array {
     $widgets = [];
     foreach ($stored_widgets as $index => $widget) {
-      if (!$this->isVisible($widget, $user_roles)) {
+      if (!$this->isVisible($widget, $user_roles, $cacheability)) {
         continue;
       }
       if ($render = $this->buildWidget($widget, 'widget_' . $index)) {
