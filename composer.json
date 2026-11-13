@@ -14,6 +14,7 @@
     "drupal/core": "^10.3 || ^11 || ^12"
   },
   "suggest": {
+    "javierms/subroles": "Restrict toolbar links and widgets to users with specific subroles (enable subadmin_toolbar_subroles).",
     "javierms/native_material": "Serve Google Material Symbols and Material Icons 100% locally without external CDN requests.",
     "javierms/native_fontawesome": "Serve Font Awesome 6 icons 100% locally without external CDN requests."
   }
