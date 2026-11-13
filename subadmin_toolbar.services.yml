@@ -1,0 +1,16 @@
+services:
+  logger.channel.subadmin_toolbar:
+    parent: logger.channel_base
+    arguments: ['subadmin_toolbar']
+
+  subadmin_toolbar.builder:
+    class: Drupal\subadmin_toolbar\ToolbarBuilder
+    arguments:
+      - '@config.factory'
+      - '@current_user'
+      - '@plugin.manager.block'
+      - '@context.repository'
+      - '@context.handler'
+      - '@file_url_generator'
+      - '@entity_type.manager'
+      - '@logger.channel.subadmin_toolbar'

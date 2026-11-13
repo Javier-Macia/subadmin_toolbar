@@ -5,12 +5,26 @@
  * Primary module hooks for Subadmin Toolbar module.
  */
 
-use Drupal\file\Entity\File;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_help().
+ */
+function subadmin_toolbar_help(string $route_name, RouteMatchInterface $route_match): ?string {
+  if ($route_name === 'help.page.subadmin_toolbar') {
+    return '<p>' . t('Provides a horizontal toolbar for secondary roles. Configure its links, widgets and appearance under <a href=":url">Configuration &gt; User interface &gt; Subadmin Toolbar</a>, then grant the %permission permission to the roles that should see it.', [
+      ':url' => Url::fromRoute('subadmin_toolbar.settings')->toString(),
+      '%permission' => t('Access the Subadmin Toolbar'),
+    ]) . '</p>';
+  }
+  return NULL;
+}
 
 /**
  * Implements hook_theme().
  */
-function subadmin_toolbar_theme($existing, $type, $theme, $path) {
+function subadmin_toolbar_theme(array $existing, string $type, string $theme, string $path): array {
   return [
     'subadmin_toolbar' => [
       'variables' => [
@@ -22,7 +36,6 @@ function subadmin_toolbar_theme($existing, $type, $theme, $path) {
         'toolbar_title_link' => NULL,
         'hide_icon' => FALSE,
       ],
-      'template' => 'subadmin-toolbar',
     ],
   ];
 }
@@ -30,186 +43,6 @@ function subadmin_toolbar_theme($existing, $type, $theme, $path) {
 /**
  * Implements hook_page_top().
  */
-function subadmin_toolbar_page_top(array &$page_top) {
-  $current_user = \Drupal::currentUser();
-
-  // Verificar permiso del usuario.
-  if (!$current_user->hasPermission('access subadmin toolbar')) {
-    return;
-  }
-
-  // Cargar configuracion de enlaces.
-  $config = \Drupal::config('subadmin_toolbar.settings');
-  $stored_links = $config->get('links') ?: [];
-
-  $current_user_roles = $current_user->getRoles();
-  $raw_links = [];
-
-  foreach ($stored_links as $link) {
-    if (empty($link['title'])) {
-      continue;
-    }
-
-    // Saltar enlaces desactivados.
-    if (isset($link['status']) && $link['status'] === 'disabled') {
-      continue;
-    }
-
-    // Verificar acceso por rol.
-    $allowed_roles = array_filter($link['roles'] ?? []);
-    if (!empty($allowed_roles) && empty(array_intersect($allowed_roles, $current_user_roles))) {
-      continue;
-    }
-
-    $link_id = !empty($link['id']) ? $link['id'] : 'link_' . uniqid();
-    $raw_links[$link_id] = [
-      'id' => $link_id,
-      'pid' => $link['pid'] ?? '',
-      'title' => $link['title'],
-      'url' => empty($link['url']) ? '#' : $link['url'],
-      'icon' => $link['icon'] ?? '',
-      'icon_type' => $link['icon_type'] ?? 'material-symbols-outlined',
-      'below' => [],
-    ];
-  }
-
-  // Construir arbol de enlaces.
-  $visible_links = [];
-  foreach ($raw_links as $id => &$link) {
-    if (!empty($link['pid']) && isset($raw_links[$link['pid']])) {
-      $raw_links[$link['pid']]['below'][$id] = &$link;
-    } else {
-      $visible_links[$id] = &$link;
-    }
-  }
-
-  // Cargar y procesar widgets.
-  $stored_widgets = $config->get('widgets') ?: [];
-  $rendered_widgets = [];
-
-  foreach ($stored_widgets as $widget) {
-    if (isset($widget['status']) && $widget['status'] === 'disabled') {
-      continue;
-    }
-
-    $allowed_roles = array_filter($widget['roles'] ?? []);
-    if (!empty($allowed_roles) && empty(array_intersect($allowed_roles, $current_user_roles))) {
-      continue;
-    }
-
-    $widget_render = subadmin_toolbar_render_widget($widget, $current_user);
-    if (!empty($widget_render)) {
-      $rendered_widgets[] = $widget_render;
-    }
-  }
-
-  if (!empty($visible_links) || !empty($rendered_widgets)) {
-    $general_config = \Drupal::config('subadmin_toolbar.general');
-    $toolbar_title = $general_config->get('toolbar_title') !== NULL ? $general_config->get('toolbar_title') : 'Gestión';
-    $accent_color = $general_config->get('accent_color') ?? '#0073ff';
-    $toolbar_title_link = $general_config->get('toolbar_title_link') ?? '';
-
-    $icon_url = NULL;
-    $fid = $general_config->get('toolbar_icon');
-    if ($fid) {
-      $file = File::load($fid);
-      if ($file) {
-        $icon_url = \Drupal::service('file_url_generator')->generateAbsoluteString($file->getFileUri());
-      }
-    }
-
-    $page_top['subadmin_toolbar'] = [
-      '#theme' => 'subadmin_toolbar',
-      '#links' => $visible_links,
-      '#widgets' => $rendered_widgets,
-      '#toolbar_title' => $toolbar_title,
-      '#toolbar_icon_url' => $icon_url,
-      '#accent_color' => $accent_color,
-      '#toolbar_title_link' => $toolbar_title_link,
-      '#hide_icon' => (bool) ($general_config->get('hide_icon') ?? FALSE),
-      '#cache' => [
-        'contexts' => ['user', 'user.roles', 'user.permissions'],
-        'tags' => [
-          'config:subadmin_toolbar.settings',
-          'config:subadmin_toolbar.general',
-        ],
-      ],
-      '#attached' => [
-        'library' => array_merge(
-          ['subadmin_toolbar/toolbar'],
-          !empty($general_config->get('enable_font_awesome')) ? ['subadmin_toolbar/font_awesome'] : []
-        ),
-      ],
-      '#weight' => -100,
-    ];
-  }
+function subadmin_toolbar_page_top(array &$page_top): void {
+  $page_top['subadmin_toolbar'] = \Drupal::service('subadmin_toolbar.builder')->build();
 }
-
-/**
- * Helper to render an existing block widget for the subadmin toolbar.
- */
-function subadmin_toolbar_render_widget(array $widget, $current_user) {
-  $plugin_id = $widget['plugin_id'] ?? '';
-  if (empty($plugin_id) || !\Drupal::hasService('plugin.manager.block')) {
-    return [];
-  }
-
-  /** @var \Drupal\Core\Block\BlockManagerInterface $block_manager */
-  $block_manager = \Drupal::service('plugin.manager.block');
-  if (!$block_manager->hasDefinition($plugin_id)) {
-    return [];
-  }
-
-  $configuration = $widget['settings'] ?? [];
-  $configuration['label_display'] = !empty($widget['label_display']) ? 'visible' : FALSE;
-  if (!empty($widget['label'])) {
-    $configuration['label'] = $widget['label'];
-  }
-
-  try {
-    /** @var \Drupal\Core\Block\BlockPluginInterface $plugin */
-    $plugin = $block_manager->createInstance($plugin_id, $configuration);
-
-    // Inyectar contextos si es ContextAwarePluginInterface
-    if ($plugin instanceof \Drupal\Core\Plugin\ContextAwarePluginInterface) {
-      $contexts = \Drupal::service('context.repository')->getRuntimeContexts($plugin->getContextMapping());
-      \Drupal::service('context.handler')->applyContextMapping($plugin, $contexts);
-    }
-
-    $access = $plugin->access($current_user, TRUE);
-    if (!$access->isAllowed()) {
-      return [];
-    }
-
-    $content = $plugin->build();
-    if ($content === NULL || \Drupal\Core\Render\Element::isEmpty($content)) {
-      return [];
-    }
-
-    $build = [
-      '#theme' => 'block',
-      '#attributes' => [
-        'class' => [
-          'subadmin-toolbar-widget',
-          'subadmin-widget-' . \Drupal\Component\Utility\Html::cleanCssIdentifier($plugin_id),
-        ],
-      ],
-      '#configuration' => $plugin->getConfiguration(),
-      '#plugin_id' => $plugin->getPluginId(),
-      '#base_plugin_id' => $plugin->getBaseId(),
-      '#derivative_plugin_id' => $plugin->getDerivativeId(),
-      '#id' => 'sat_' . ($widget['id'] ?? uniqid()),
-      'content' => $content,
-    ];
-
-    \Drupal\Core\Render\BubbleableMetadata::createFromRenderArray($build)
-      ->addCacheableDependency($access)
-      ->addCacheableDependency($plugin);
-
-    return $build;
-  }
-  catch (\Exception $e) {
-    return [];
-  }
-}
-
