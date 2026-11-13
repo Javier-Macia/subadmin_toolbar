@@ -87,6 +87,7 @@ subadmin_toolbar.general:
     toolbar_icon:
       type: integer
       label: 'Toolbar Icon File ID'
+      nullable: true
     toolbar_title_link:
       type: string
       label: 'Toolbar Title Link'

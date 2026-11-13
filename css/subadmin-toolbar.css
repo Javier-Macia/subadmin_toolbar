@@ -803,3 +803,9 @@ body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:ha
     background-color: var(--subadmin-toolbar-hover-bg);
     color: var(--subadmin-toolbar-accent);
 }
+.subadmin-toolbar-logo-img {
+  height: 24px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
