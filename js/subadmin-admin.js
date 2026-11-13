@@ -17,17 +17,30 @@
    */
   const indentSize = (el) => parseFloat(getComputedStyle(el).getPropertyValue('--subadmin-indent')) || 24;
 
-  /** Icons offered as suggestions in the editor (Material names). */
-  const ICON_SUGGESTIONS = [
-    'home', 'dashboard', 'calendar_month', 'event', 'schedule', 'person', 'group', 'groups', 'badge', 'contacts',
-    'description', 'folder', 'folder_open', 'article', 'assignment', 'checklist', 'task_alt', 'receipt_long', 'payments',
-    'euro', 'credit_card', 'account_balance', 'request_quote', 'inventory_2', 'shopping_cart', 'storefront', 'sell',
-    'bar_chart', 'monitoring', 'analytics', 'pie_chart', 'summarize', 'fact_check', 'verified_user', 'security', 'lock',
-    'settings', 'tune', 'build', 'manage_accounts', 'admin_panel_settings', 'key', 'mail', 'chat', 'forum', 'call',
-    'notifications', 'campaign', 'help', 'info', 'search', 'add_circle', 'edit_note', 'upload_file', 'download', 'print',
-    'map', 'location_on', 'work', 'medical_services', 'psychology', 'health_and_safety', 'favorite', 'star', 'bookmark',
-    'link', 'share', 'history', 'sync', 'list_alt', 'table_chart', 'view_list', 'apps', 'menu_book', 'school',
+  /** Icon names offered as suggestions (provided by the form, alterable). */
+  const iconSuggestions = () => (drupalSettings.subadminToolbar && drupalSettings.subadminToolbar.iconSuggestions) || [];
+
+  /** Shown while nothing has been typed yet. */
+  const COMMON_ICONS = [
+    'home', 'dashboard', 'calendar_month', 'person', 'group', 'description', 'folder', 'payments', 'bar_chart',
+    'settings', 'mail', 'call', 'notifications', 'help', 'search', 'map', 'work', 'medical_services',
   ];
+
+  /**
+   * Icon names for a query: those that start with it first, then the rest.
+   */
+  const matchIcons = (query, limit = 24) => {
+    const all = iconSuggestions();
+    if (!query) return COMMON_ICONS;
+    const starts = [];
+    const contains = [];
+    for (const name of all) {
+      if (name.startsWith(query)) starts.push(name);
+      else if (name.includes(query)) contains.push(name);
+      if (starts.length >= limit) break;
+    }
+    return starts.concat(contains).slice(0, limit);
+  };
 
   /** Distance from the scroll edge, in px, where auto-scroll starts. */
   const SCROLL_ZONE = 56;
@@ -924,7 +937,7 @@
       if (grid.dataset.key !== key) {
         grid.dataset.key = key;
         grid.textContent = '';
-        ICON_SUGGESTIONS.filter((name) => name.includes(icon.toLowerCase())).slice(0, 18).forEach((name) => {
+        matchIcons(icon.toLowerCase()).forEach((name) => {
           const button = document.createElement('button');
           button.type = 'button';
           button.className = 'subadmin-icon-option';

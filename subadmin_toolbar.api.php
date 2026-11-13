@@ -76,5 +76,15 @@ function hook_subadmin_toolbar_item_values_alter(array &$item, array $configurat
 }
 
 /**
+ * Alter the icon names suggested in the visual editor.
+ *
+ * @param string[] $icons
+ *   Material icon names.
+ */
+function hook_subadmin_toolbar_icon_suggestions_alter(array &$icons): void {
+  $icons[] = 'sports_soccer';
+}
+
+/**
  * @} End of "addtogroup hooks".
  */
