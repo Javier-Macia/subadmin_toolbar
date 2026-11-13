@@ -11,7 +11,7 @@
   ],
   "keywords": ["drupal", "toolbar", "admin", "subadmin", "menu", "drag and drop", "roles", "icons"],
   "require": {
-    "drupal/core": "^10 || ^11 || ^12"
+    "drupal/core": "^10.3 || ^11 || ^12"
   },
   "suggest": {
     "javierms/native_material": "Serve Google Material Symbols and Material Icons 100% locally without external CDN requests.",

@@ -19,7 +19,7 @@ It provides a clean, distraction-free horizontal top toolbar with nested dropdow
 
 ## Requirements
 
-- Drupal 10, 11 or 12.
+- Drupal 10.3+, 11 or 12.
 
 ## Installation
 
