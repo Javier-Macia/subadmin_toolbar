@@ -10,7 +10,7 @@
     --subadmin-toolbar-accent: #0073ff;
     --subadmin-toolbar-bg: #ffffff;
     --subadmin-toolbar-text: #000000;
-    --subadmin-toolbar-hover-bg: #fcfcfc;
+    --subadmin-toolbar-hover-bg: #eef1f5;
     --subadmin-toolbar-submenu-bg: #ffffff;
     --subadmin-toolbar-border: #e6e6e6;
     --subadmin-toolbar-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -175,12 +175,31 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
 }
 
 #subadmin-toolbar .subadmin-toolbar-link:hover,
-#subadmin-toolbar .subadmin-toolbar-link:focus,
+#subadmin-toolbar .subadmin-toolbar-link:focus-visible,
 #subadmin-toolbar .subadmin-toolbar-sublink:hover,
-#subadmin-toolbar .subadmin-toolbar-sublink:focus {
+#subadmin-toolbar .subadmin-toolbar-sublink:focus-visible {
     background-color: var(--subadmin-toolbar-hover-bg);
     color: var(--subadmin-toolbar-text);
+}
+
+/* A visible keyboard focus ring (WCAG 2.4.7); the mouse keeps the plain look. */
+#subadmin-toolbar .subadmin-toolbar-link:focus-visible,
+#subadmin-toolbar .subadmin-toolbar-sublink:focus-visible,
+#subadmin-toolbar .subadmin-toolbar-toggle:focus-visible {
+    outline: 2px solid var(--subadmin-toolbar-accent);
+    outline-offset: -2px;
+}
+
+#subadmin-toolbar .subadmin-toolbar-link:focus:not(:focus-visible),
+#subadmin-toolbar .subadmin-toolbar-sublink:focus:not(:focus-visible) {
     outline: none;
+}
+
+/* The "More" item is a button: reset what buttons bring by default. */
+#subadmin-toolbar button.subadmin-toolbar-link {
+    background: none;
+    font-family: inherit;
+    cursor: pointer;
 }
 
 /* --- Iconos y Carets --- */
@@ -337,14 +356,31 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
 }
 
 #subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item:hover>.subadmin-toolbar-submenu,
-#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-subitem:hover>.subadmin-toolbar-submenu {
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-subitem:hover>.subadmin-toolbar-submenu,
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item.is-open>.subadmin-toolbar-submenu,
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-subitem.is-open>.subadmin-toolbar-submenu {
     visibility: visible;
     opacity: 1;
     pointer-events: auto;
 }
 
-#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item.has-submenu:hover>.subadmin-toolbar-link .subadmin-toolbar-caret {
+/* Escape hides a menu opened by hover until the pointer leaves (WCAG 1.4.13). */
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item.is-dismissed>.subadmin-toolbar-submenu,
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-subitem.is-dismissed>.subadmin-toolbar-submenu {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item.has-submenu:hover>.subadmin-toolbar-link .subadmin-toolbar-caret,
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item.has-submenu.is-open>.subadmin-toolbar-link .subadmin-toolbar-caret {
     transform: rotate(180deg);
+}
+
+/* Items moved into "More" open their own submenus to the left, away from the edge. */
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-more .subadmin-toolbar-submenu .subadmin-toolbar-submenu {
+    left: auto !important;
+    right: 100% !important;
 }
 
 /* ==========================================================================
