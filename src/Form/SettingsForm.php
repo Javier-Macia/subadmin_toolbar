@@ -80,6 +80,7 @@ class SettingsForm extends ToolbarFormBase {
       $form['#attached']['library'][] = 'subadmin_toolbar/font_awesome';
     }
     $form['#attached']['drupalSettings']['subadminToolbar']['availableIconTypes'] = $icon_type_options;
+    $form['#attached']['drupalSettings']['subadminToolbar']['iconSuggestions'] = $this->getIconSuggestions();
     $form['#tree'] = TRUE;
 
     $form['links_wrapper'] = [

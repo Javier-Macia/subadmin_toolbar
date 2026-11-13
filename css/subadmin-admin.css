@@ -48,7 +48,7 @@
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 500;
-  color: var(--color-text-muted, #64748b);
+  color: var(--color-text-muted, #475569);
   cursor: pointer;
   transition: all 0.15s ease;
   display: inline-flex;
@@ -234,7 +234,7 @@
 }
 
 .subadmin-drag-item.disabled-item > .subadmin-drag-item-header {
-  opacity: 0.55;
+  opacity: 0.7;
 }
 
 .subadmin-drag-item.is-collapsed > .subadmin-drag-sublist {

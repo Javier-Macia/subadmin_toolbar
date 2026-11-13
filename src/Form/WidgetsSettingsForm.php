@@ -155,6 +155,7 @@ class WidgetsSettingsForm extends ToolbarFormBase {
         '#type' => 'select',
         '#title' => $this->t('Block'),
         '#title_display' => 'invisible',
+        '#attributes' => ['aria-label' => $this->t('Block')],
         '#options' => $block_options,
         '#empty_option' => $this->t('- Select block -'),
         '#default_value' => $plugin_id,

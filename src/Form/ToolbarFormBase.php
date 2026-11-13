@@ -93,6 +93,22 @@ abstract class ToolbarFormBase extends ConfigFormBase {
   }
 
   /**
+   * Material icon names suggested in the visual editor.
+   *
+   * The bundled catalog (data/material-icons.json) holds every Material
+   * Symbols name, so typing any valid name gets a match.
+   *
+   * @return string[]
+   *   The icon names, after hook_subadmin_toolbar_icon_suggestions_alter().
+   */
+  protected function getIconSuggestions(): array {
+    $file = dirname(__DIR__, 2) . '/data/material-icons.json';
+    $icons = is_readable($file) ? (json_decode((string) file_get_contents($file), TRUE) ?: []) : [];
+    $this->moduleHandler->alter('subadmin_toolbar_icon_suggestions', $icons);
+    return array_values(array_unique($icons));
+  }
+
+  /**
    * Whether a URL is empty, an internal path (/, #, ?) or a safe external URL.
    */
   protected function isValidUrl(string $url): bool {
