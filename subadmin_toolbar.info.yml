@@ -4,7 +4,7 @@ description: 'Provides a custom Gin-like toolbar for sub-administrators to acces
 package: DropSense
 core_version_requirement: ^10.3 || ^11 || ^12
 configure: subadmin_toolbar.settings
-version: 2.1.0
+'interface translation project': subadmin_toolbar
 dependencies:
   - drupal:block
   - drupal:file

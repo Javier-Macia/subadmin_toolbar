@@ -9,8 +9,25 @@
 (function (Drupal, drupalSettings) {
   'use strict';
 
-  /** Horizontal distance, in px, that corresponds to one nesting level. */
-  const INDENT = 24;
+  /**
+   * Horizontal distance, in px, that corresponds to one nesting level.
+   *
+   * It comes from the --subadmin-indent CSS variable so the drag maths follow
+   * the (narrower) indentation used on small screens.
+   */
+  const indentSize = (el) => parseFloat(getComputedStyle(el).getPropertyValue('--subadmin-indent')) || 24;
+
+  /** Icons offered as suggestions in the editor (Material names). */
+  const ICON_SUGGESTIONS = [
+    'home', 'dashboard', 'calendar_month', 'event', 'schedule', 'person', 'group', 'groups', 'badge', 'contacts',
+    'description', 'folder', 'folder_open', 'article', 'assignment', 'checklist', 'task_alt', 'receipt_long', 'payments',
+    'euro', 'credit_card', 'account_balance', 'request_quote', 'inventory_2', 'shopping_cart', 'storefront', 'sell',
+    'bar_chart', 'monitoring', 'analytics', 'pie_chart', 'summarize', 'fact_check', 'verified_user', 'security', 'lock',
+    'settings', 'tune', 'build', 'manage_accounts', 'admin_panel_settings', 'key', 'mail', 'chat', 'forum', 'call',
+    'notifications', 'campaign', 'help', 'info', 'search', 'add_circle', 'edit_note', 'upload_file', 'download', 'print',
+    'map', 'location_on', 'work', 'medical_services', 'psychology', 'health_and_safety', 'favorite', 'star', 'bookmark',
+    'link', 'share', 'history', 'sync', 'list_alt', 'table_chart', 'view_list', 'apps', 'menu_book', 'school',
+  ];
 
   /** Distance from the scroll edge, in px, where auto-scroll starts. */
   const SCROLL_ZONE = 56;
@@ -97,16 +114,16 @@
     },
 
     buildUI() {
-      const t = Drupal.t;
       this.form.insertAdjacentHTML('afterbegin', `
         <div class="subadmin-admin-header">
-          <h3><span class="material-symbols-outlined" aria-hidden="true">widgets</span> ${t('Subadmin Toolbar menu')}</h3>
-          <div class="subadmin-view-switcher" role="group" aria-label="${t('View')}">
+          <h3><span class="material-symbols-outlined" aria-hidden="true">widgets</span> ${Drupal.t('Subadmin Toolbar menu')}</h3>
+          <p class="subadmin-dirty" role="status" hidden>${Drupal.t('Unsaved changes. Use "Save configuration" at the bottom of the page.')}</p>
+          <div class="subadmin-view-switcher" role="group" aria-label="${Drupal.t('View')}">
             <button type="button" class="subadmin-btn-toggle" data-view="visual">
-              <span class="material-symbols-outlined" aria-hidden="true">dashboard</span> ${t('Visual view')}
+              <span class="material-symbols-outlined" aria-hidden="true">dashboard</span> ${Drupal.t('Visual view')}
             </button>
             <button type="button" class="subadmin-btn-toggle" data-view="classic">
-              <span class="material-symbols-outlined" aria-hidden="true">table_rows</span> ${t('Classic view')}
+              <span class="material-symbols-outlined" aria-hidden="true">table_rows</span> ${Drupal.t('Classic view')}
             </button>
           </div>
         </div>`);
@@ -115,21 +132,21 @@
         <div class="subadmin-visual-builder-container subadmin-view-hidden">
           <div class="subadmin-builder-preview">
             <div class="subadmin-preview-title">
-              <span>${t('Toolbar navigation')} <span class="subadmin-count" aria-live="polite"></span></span>
+              <span>${Drupal.t('Toolbar navigation')} <span class="subadmin-count" aria-live="polite"></span></span>
               <button type="button" class="subadmin-btn-add-item">
-                <span class="material-symbols-outlined" aria-hidden="true">add</span> ${t('Add')}
+                <span class="material-symbols-outlined" aria-hidden="true">add</span> ${Drupal.t('Add')}
               </button>
             </div>
             <div class="subadmin-tree-tools">
-              <input type="search" class="subadmin-tree-filter" placeholder="${t('Filter links…')}" aria-label="${t('Filter links')}">
-              <button type="button" class="subadmin-icon-btn subadmin-btn-expand-all" title="${t('Expand all')}" aria-label="${t('Expand all')}">
+              <input type="search" class="subadmin-tree-filter" placeholder="${Drupal.t('Filter links…')}" aria-label="${Drupal.t('Filter links')}">
+              <button type="button" class="subadmin-icon-btn subadmin-btn-expand-all" title="${Drupal.t('Expand all')}" aria-label="${Drupal.t('Expand all')}">
                 <span class="material-symbols-outlined" aria-hidden="true">unfold_more</span>
               </button>
-              <button type="button" class="subadmin-icon-btn subadmin-btn-collapse-all" title="${t('Collapse all')}" aria-label="${t('Collapse all')}">
+              <button type="button" class="subadmin-icon-btn subadmin-btn-collapse-all" title="${Drupal.t('Collapse all')}" aria-label="${Drupal.t('Collapse all')}">
                 <span class="material-symbols-outlined" aria-hidden="true">unfold_less</span>
               </button>
             </div>
-            <p class="subadmin-tree-hint">${t('Drag the handle to reorder; move sideways to change the level. With the keyboard, focus a handle and use the arrow keys.')}</p>
+            <p class="subadmin-tree-hint">${Drupal.t('Drag the handle to reorder; move sideways to change the level. With the keyboard, focus a handle and use the arrow keys.')}</p>
             <div class="subadmin-tree-scroll">
               <ul class="subadmin-drag-list" id="subadmin-drag-root"></ul>
               <div class="subadmin-drop-indicator" hidden></div>
@@ -138,7 +155,7 @@
           <div class="subadmin-builder-editor">
             <div class="subadmin-editor-empty">
               <span class="material-symbols-outlined" aria-hidden="true">ads_click</span>
-              <p>${t('Select a link on the left to edit its properties.')}</p>
+              <p>${Drupal.t('Select a link on the left to edit its properties.')}</p>
             </div>
             <div class="subadmin-editor-form-wrapper" hidden></div>
           </div>
@@ -211,7 +228,6 @@
     },
 
     createItemElement(node) {
-      const t = Drupal.t;
       const disabled = node.status === 'disabled';
       const li = document.createElement('li');
       li.className = 'subadmin-drag-item' + (disabled ? ' disabled-item' : '');
@@ -219,23 +235,23 @@
 
       li.innerHTML = `
         <div class="subadmin-drag-item-header">
-          <button type="button" class="subadmin-icon-btn subadmin-btn-collapse" aria-expanded="true" title="${t('Expand/collapse')}">
+          <button type="button" class="subadmin-icon-btn subadmin-btn-collapse" aria-expanded="true" title="${Drupal.t('Expand/collapse')}">
             <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>
           </button>
-          <button type="button" class="subadmin-drag-handle" aria-roledescription="${t('sortable')}">
+          <button type="button" class="subadmin-drag-handle" aria-roledescription="${Drupal.t('sortable')}">
             <span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span>
           </button>
           <span class="subadmin-item-icon">${iconMarkup(node.iconType, node.icon)}</span>
           <span class="subadmin-item-title-text"></span>
           <span class="subadmin-item-actions">
-            <label class="subadmin-toggle-switch" title="${t('Enable/disable')}">
-              <input type="checkbox" class="subadmin-status-toggle" ${disabled ? '' : 'checked'} aria-label="${t('Enabled')}">
+            <label class="subadmin-toggle-switch" title="${Drupal.t('Enable/disable')}">
+              <input type="checkbox" class="subadmin-status-toggle" ${disabled ? '' : 'checked'} aria-label="${Drupal.t('Enabled')}">
               <span class="subadmin-slider"></span>
             </label>
-            <button type="button" class="subadmin-icon-btn subadmin-btn-edit" title="${t('Edit')}" aria-label="${t('Edit')}">
+            <button type="button" class="subadmin-icon-btn subadmin-btn-edit" title="${Drupal.t('Edit')}" aria-label="${Drupal.t('Edit')}">
               <span class="material-symbols-outlined" aria-hidden="true">edit</span>
             </button>
-            <button type="button" class="subadmin-icon-btn subadmin-btn-delete" title="${t('Remove')}" aria-label="${t('Remove')}">
+            <button type="button" class="subadmin-icon-btn subadmin-btn-delete" title="${Drupal.t('Remove')}" aria-label="${Drupal.t('Remove')}">
               <span class="material-symbols-outlined" aria-hidden="true">delete</span>
             </button>
           </span>
@@ -390,6 +406,15 @@
     commit() {
       this.refreshStructure();
       this.syncVisualToClassic();
+      this.markDirty();
+    },
+
+    /**
+     * Tells the user that there are changes that were not saved yet.
+     */
+    markDirty() {
+      const notice = this.form.querySelector('.subadmin-dirty');
+      if (notice) notice.hidden = false;
     },
 
     bindEvents() {
@@ -431,6 +456,7 @@
           headerOf(item).querySelector('.subadmin-status-toggle').checked = toggle.checked;
         });
         self.syncVisualToClassic();
+        self.markDirty();
       });
 
       this.filterInput.addEventListener('input', () => self.applyFilter());
@@ -473,14 +499,45 @@
       const message = li.classList.contains('has-children')
         ? Drupal.t('Remove "@title" and its sub-links?', { '@title': title })
         : Drupal.t('Remove "@title"?', { '@title': title });
-      if (!window.confirm(message)) return;
+      this.confirm(message, Drupal.t('Remove'), () => {
+        this.syncVisualToClassic();
+        const removeBtn = data.tr && data.tr.querySelector('.subadmin-btn-remove-row');
+        if (removeBtn) {
+          removeBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+          removeBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        }
+      });
+    },
 
-      this.syncVisualToClassic();
-      const removeBtn = data.tr && data.tr.querySelector('.subadmin-btn-remove-row');
-      if (removeBtn) {
-        removeBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-        removeBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-      }
+    /**
+     * Asks for confirmation in a Drupal dialog (modal, keyboard friendly).
+     */
+    confirm(message, confirmLabel, onConfirm) {
+      const content = document.createElement('p');
+      content.textContent = message;
+      const dialog = Drupal.dialog(content, {
+        title: Drupal.t('Please confirm'),
+        modal: true,
+        width: 420,
+        dialogClass: 'subadmin-confirm-dialog',
+        buttons: [
+          {
+            text: confirmLabel,
+            class: 'button button--primary',
+            click: () => {
+              dialog.close();
+              onConfirm();
+            },
+          },
+          {
+            text: Drupal.t('Cancel'),
+            class: 'button',
+            click: () => dialog.close(),
+          },
+        ],
+        close: (event) => event.target.remove(),
+      });
+      dialog.showModal();
     },
 
     // ------------------------------------------------------------------
@@ -519,6 +576,7 @@
         pointerId: e.pointerId,
         startX: e.clientX,
         startDepth: depthOf(li),
+        indent: indentSize(this.root),
         offsetY: e.clientY - headerRect.top,
         clientX: e.clientX,
         clientY: e.clientY,
@@ -567,17 +625,17 @@
       const next = d.rows[gap];
       const max = prev ? prev.depth + 1 : 0;
       const min = Math.min(next ? next.depth : 0, max);
-      const wanted = d.startDepth + Math.round((d.clientX - d.startX) / INDENT);
+      const wanted = d.startDepth + Math.round((d.clientX - d.startX) / d.indent);
       const depth = Math.max(min, Math.min(max, wanted));
 
       d.target = { prev, depth };
 
       const top = prev ? prev.bottom : (next ? next.top : 0);
-      const left = this.root.offsetLeft + depth * INDENT;
+      const left = this.root.offsetLeft + depth * d.indent;
       Object.assign(this.indicator.style, {
         top: `${top}px`,
         left: `${left}px`,
-        width: `${Math.max(40, this.root.clientWidth - depth * INDENT)}px`,
+        width: `${Math.max(40, this.root.clientWidth - depth * d.indent)}px`,
       });
       this.indicator.hidden = false;
     },
@@ -737,7 +795,6 @@
     },
 
     openEditor(li, focusTitle = false) {
-      const t = Drupal.t;
       const data = li.nodeData;
       const row = data.tr;
       if (!row) return;
@@ -752,13 +809,28 @@
       };
       const iconType = field('select[name$="[icon_type]"]');
 
-      const rolesHTML = Array.from(row.querySelectorAll('input[name*="[roles]"]')).map((chk) => {
-        const label = chk.nextElementSibling;
-        const text = label && label.tagName === 'LABEL' ? label.textContent : chk.value;
-        return `<label class="subadmin-role-item">
-            <input type="checkbox" class="subadmin-editor-role" value="${esc(chk.value)}" ${chk.checked ? 'checked' : ''}>
+      // Checkbox groups (roles, and whatever other modules add) are discovered
+      // from the row, so the editor needs no knowledge of them.
+      // Drupal copies the attributes of a checkboxes element to its wrapper,
+      // inner container and every checkbox: keep only the outermost one.
+      const groups = Array.from(row.querySelectorAll('[data-subadmin-group]:not(input)'))
+        .filter((el) => !el.parentElement.closest('[data-subadmin-group]'));
+      const groupsHTML = groups.map((group) => {
+        const name = group.dataset.subadminGroup;
+        const options = Array.from(group.querySelectorAll('input[type="checkbox"]')).map((chk) => {
+          const label = group.querySelector(`label[for="${CSS.escape(chk.id)}"]`);
+          const text = label ? label.textContent : chk.value;
+          return `<label class="subadmin-role-item">
+            <input type="checkbox" class="subadmin-editor-group-option" data-group="${esc(name)}" value="${esc(chk.value)}" ${chk.checked ? 'checked' : ''}>
             <span>${esc(text)}</span>
           </label>`;
+        }).join('');
+        const help = group.dataset.subadminGroupHelp;
+        return `<div class="subadmin-form-group">
+            <span class="subadmin-form-label">${esc(group.dataset.subadminGroupLabel || name)}</span>
+            <div class="subadmin-roles-column">${options}</div>
+            ${help ? `<p class="subadmin-field-help">${esc(help)}</p>` : ''}
+          </div>`;
       }).join('');
 
       // Only offer the icon families that are available.
@@ -776,42 +848,96 @@
         <div class="subadmin-editor-form">
           <h4 class="subadmin-editor-heading">
             <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-            <span class="subadmin-editor-heading-text">${esc(data.title || t('New link'))}</span>
+            <span class="subadmin-editor-heading-text">${esc(data.title || Drupal.t('New link'))}</span>
           </h4>
           <div class="subadmin-form-group">
-            <label>${t('Link title')}
+            <label>${Drupal.t('Link title')}
               <input type="text" class="subadmin-editor-title" value="${esc(field('input[name$="[title]"]'))}">
             </label>
           </div>
           <div class="subadmin-form-group">
-            <label>${t('URL or Drupal path')}
+            <label>${Drupal.t('URL or Drupal path')}
               <input type="text" class="subadmin-editor-url" value="${esc(field('input[name$="[url]"]'))}" placeholder="/admin/content">
             </label>
           </div>
           <div class="subadmin-form-group">
-            <label>${t('Icon family')}
+            <label>${Drupal.t('Icon family')}
               <select class="subadmin-editor-icon-type">${iconOptionsHTML}</select>
             </label>
           </div>
           <div class="subadmin-form-group">
-            <label>${t('Icon name')}
-              <input type="text" class="subadmin-editor-icon" value="${esc(field('input[name$="[icon]"]'))}" placeholder="settings / home / calendar_month">
-            </label>
+            <label for="subadmin-editor-icon">${Drupal.t('Icon name')}</label>
+            <div class="subadmin-icon-field">
+              <input type="text" id="subadmin-editor-icon" class="subadmin-editor-icon" value="${esc(field('input[name$="[icon]"]'))}" placeholder="settings / home / calendar_month" autocomplete="off" aria-describedby="subadmin-icon-help">
+              <span class="subadmin-icon-preview" aria-hidden="true"></span>
+            </div>
+            <div class="subadmin-icon-grid" role="group" aria-label="${Drupal.t('Suggested icons')}"></div>
+            <p class="subadmin-field-help" id="subadmin-icon-help">${Drupal.t('If the preview shows text instead of an icon, that icon name does not exist.')}</p>
           </div>
-          <div class="subadmin-form-group">
-            <span class="subadmin-form-label">${t('Allowed roles')}</span>
-            <div class="subadmin-roles-column">${rolesHTML}</div>
-            <p class="subadmin-field-help">${t('If no roles are selected, the link is visible to everyone with access to the toolbar.')}</p>
-          </div>
+          ${groupsHTML}
         </div>`;
 
-      const onChange = () => this.applyEditorChanges();
+      const onChange = () => {
+        this.applyEditorChanges();
+        this.renderIconHelpers();
+      };
       this.editorWrapper.querySelectorAll('input, select').forEach((el) => {
         el.addEventListener('input', onChange);
         el.addEventListener('change', onChange);
       });
+      this.editorWrapper.querySelector('.subadmin-icon-grid').addEventListener('click', (e) => {
+        const button = e.target.closest('button[data-icon]');
+        if (!button) return;
+        this.editorWrapper.querySelector('.subadmin-editor-icon').value = button.dataset.icon;
+        onChange();
+      });
+      this.renderIconHelpers();
 
-      if (focusTitle) this.editorWrapper.querySelector('.subadmin-editor-title').focus();
+      if (focusTitle) {
+        this.editorWrapper.querySelector('.subadmin-editor-title').focus();
+      }
+      // On narrow screens the editor sits below the list: bring it into view.
+      if (window.matchMedia('(max-width: 900px)').matches) {
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        this.editorWrapper.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
+      }
+    },
+
+    /**
+     * Updates the icon preview and the suggestions that match what was typed.
+     */
+    renderIconHelpers() {
+      const q = (selector) => this.editorWrapper.querySelector(selector);
+      const type = q('.subadmin-editor-icon-type').value;
+      const icon = q('.subadmin-editor-icon').value.trim();
+      q('.subadmin-icon-preview').innerHTML = iconMarkup(type, icon);
+
+      const grid = q('.subadmin-icon-grid');
+      // Suggestions are Material names; other families only get the preview.
+      grid.hidden = isFontAwesome(type, icon) || !type.startsWith('material');
+      if (grid.hidden) return;
+
+      // Rebuilding the buttons while one is being pressed would swallow its
+      // click (the input's change event fires on mousedown), so only do it
+      // when the filter actually changed.
+      const key = `${type}|${icon.toLowerCase()}`;
+      if (grid.dataset.key !== key) {
+        grid.dataset.key = key;
+        grid.textContent = '';
+        ICON_SUGGESTIONS.filter((name) => name.includes(icon.toLowerCase())).slice(0, 18).forEach((name) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'subadmin-icon-option';
+          button.dataset.icon = name;
+          button.title = name;
+          button.setAttribute('aria-label', name);
+          button.innerHTML = iconMarkup(type, name);
+          grid.appendChild(button);
+        });
+      }
+      grid.querySelectorAll('.subadmin-icon-option').forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.dataset.icon === icon));
+      });
     },
 
     applyEditorChanges() {
@@ -839,11 +965,13 @@
       set('select[name$="[icon_type]"]', data.iconType);
       set('input[name$="[icon]"]', data.icon);
 
-      this.editorWrapper.querySelectorAll('.subadmin-editor-role').forEach((chk) => {
-        const rowChk = row.querySelector(`input[name*="[roles]"][value="${CSS.escape(chk.value)}"]`);
+      this.editorWrapper.querySelectorAll('.subadmin-editor-group-option').forEach((chk) => {
+        const group = CSS.escape(chk.dataset.group);
+        const rowChk = row.querySelector(`[data-subadmin-group="${group}"] input[value="${CSS.escape(chk.value)}"]`);
         if (rowChk) rowChk.checked = chk.checked;
       });
 
+      this.markDirty();
       if (this.filterInput.value) this.applyFilter();
     },
   };

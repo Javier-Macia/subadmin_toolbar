@@ -53,6 +53,46 @@ abstract class ToolbarFormBase extends ConfigFormBase {
   }
 
   /**
+   * Marks a checkboxes element as a group the visual builder can edit.
+   */
+  protected function markEditorGroup(array $element, string $group): array {
+    $element['#attributes']['data-subadmin-group'] = $group;
+    $element['#attributes']['data-subadmin-group-label'] = (string) $element['#title'];
+    if (!empty($element['#description'])) {
+      $element['#attributes']['data-subadmin-group-help'] = (string) $element['#description'];
+    }
+    return $element;
+  }
+
+  /**
+   * Lets other modules add fields to the settings of an item.
+   *
+   * @param array $configuration
+   *   The "configuration" element of the item row.
+   * @param array $item
+   *   The stored item the row is built from.
+   * @param string $type
+   *   Either "link" or "widget".
+   */
+  protected function alterItemConfiguration(array &$configuration, array $item, string $type): void {
+    $this->moduleHandler->alter('subadmin_toolbar_item_configuration', $configuration, $item, $type);
+  }
+
+  /**
+   * Lets other modules store the values of the fields they added to an item.
+   *
+   * @param array $item
+   *   The item being stored.
+   * @param array $configuration
+   *   The submitted values of the "configuration" element of the row.
+   * @param string $type
+   *   Either "link" or "widget".
+   */
+  protected function alterItemValues(array &$item, array $configuration, string $type): void {
+    $this->moduleHandler->alter('subadmin_toolbar_item_values', $item, $configuration, $type);
+  }
+
+  /**
    * Whether a URL is empty, an internal path (/, #, ?) or a safe external URL.
    */
   protected function isValidUrl(string $url): bool {

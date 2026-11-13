@@ -1,0 +1,8 @@
+name: 'Subadmin Toolbar Subroles'
+type: module
+description: 'Lets the Subadmin Toolbar links and widgets be restricted to users with specific subroles.'
+package: DropSense
+core_version_requirement: ^11.2
+dependencies:
+  - subadmin_toolbar:subadmin_toolbar
+  - subroles:subroles

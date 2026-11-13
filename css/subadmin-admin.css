@@ -111,7 +111,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--color-text-muted, #64748b);
+  color: var(--color-text-muted, #475569);
   margin-bottom: 0.6rem;
   display: flex;
   justify-content: space-between;
@@ -163,8 +163,8 @@
 
 .subadmin-tree-hint {
   margin: 0 0 0.5rem;
-  font-size: 0.75rem;
-  color: var(--color-text-muted, #64748b);
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #475569);
 }
 
 .is-filtering .subadmin-tree-hint {
@@ -191,10 +191,14 @@
   min-height: 48px;
 }
 
-/* One indentation level is exactly 24px (see INDENT in the script). */
+/* One indentation level is exactly --subadmin-indent (the script reads it). */
+.subadmin-visual-builder-container {
+  --subadmin-indent: 24px;
+}
+
 .subadmin-drag-sublist {
-  margin-left: 11px;
-  padding-left: 12px;
+  margin-left: calc(var(--subadmin-indent) / 2 - 1px);
+  padding-left: calc(var(--subadmin-indent) / 2);
   border-left: 1px solid var(--color-border, #cbd5e1);
 }
 
@@ -264,7 +268,7 @@
   border: none;
   border-radius: 6px;
   background: none;
-  color: var(--color-text-muted, #94a3b8);
+  color: var(--color-text-muted, #64748b);
   cursor: grab;
   touch-action: none;
 }
@@ -282,6 +286,7 @@
   width: 24px;
   height: 24px;
   flex-shrink: 0;
+  overflow: hidden;
   color: #2563eb;
 }
 
@@ -332,7 +337,7 @@
 .subadmin-icon-btn {
   background: none;
   border: none;
-  color: #64748b;
+  color: #475569;
   padding: 0.3rem;
   border-radius: 6px;
   cursor: pointer;
@@ -496,8 +501,8 @@ input:focus-visible + .subadmin-slider {
 
 .subadmin-field-help {
   margin: 0;
-  font-size: 0.78rem;
-  color: var(--color-text-muted, #64748b);
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #475569);
 }
 
 .subadmin-editor-empty {
@@ -507,7 +512,7 @@ input:focus-visible + .subadmin-slider {
   justify-content: center;
   height: 100%;
   min-height: 250px;
-  color: #64748b;
+  color: #475569;
   text-align: center;
   padding: 2rem;
 }
@@ -695,4 +700,170 @@ body.gin--dark-mode .subadmin-block-settings-wrapper > legend,
 body.theme-dark .subadmin-block-settings-wrapper > legend,
 [data-theme="dark"] .subadmin-block-settings-wrapper > legend {
   color: #f8fafc !important;
+}
+
+/* Unsaved changes notice, icon picker and confirmation dialog */
+.subadmin-dirty {
+  margin: 0;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.875rem;
+  color: #7c2d12;
+  background: #ffedd5;
+  border-radius: 6px;
+}
+
+.subadmin-icon-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.subadmin-icon-field input {
+  flex: 1;
+  min-width: 0;
+}
+
+.subadmin-icon-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  color: #2563eb;
+  border: 1px solid var(--color-border, #cbd5e1);
+  border-radius: 6px;
+}
+
+.subadmin-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 0.25rem;
+}
+
+.subadmin-icon-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0;
+  color: #2563eb;
+  background: var(--color-bg-app, #f1f5f9);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.subadmin-icon-option:hover,
+.subadmin-icon-option:focus-visible,
+.subadmin-icon-option[aria-pressed="true"] {
+  border-color: #2563eb;
+}
+
+/* Small screens: tighter paddings and indentation so titles stay readable. */
+@media (max-width: 900px) {
+  .subadmin-builder-editor {
+    position: static;
+    max-height: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .subadmin-visual-builder-container {
+    --subadmin-indent: 14px;
+    padding: 0.5rem;
+    gap: 0.75rem;
+  }
+
+  .subadmin-builder-preview,
+  .subadmin-builder-editor {
+    padding: 0.6rem;
+  }
+
+  .subadmin-item-icon {
+    display: none;
+  }
+
+  .subadmin-drag-item-header {
+    gap: 0.2rem;
+  }
+}
+
+/* Classic table: keep the "Configuration" summary on one line and rows short. */
+#links-wrapper table td,
+#widgets-wrapper table td {
+  vertical-align: top;
+}
+
+#links-wrapper table td:nth-child(2) {
+  min-width: 14rem;
+}
+
+#links-wrapper table summary {
+  hyphens: manual;
+  white-space: nowrap;
+}
+
+/* Widgets: fixed layout so the options never push past the page width. */
+#widgets-wrapper table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+#widgets-wrapper table th:nth-child(1),
+#widgets-wrapper table td:nth-child(1) {
+  width: 28%;
+}
+
+#widgets-wrapper table th:last-child,
+#widgets-wrapper table td:last-child {
+  width: 9rem;
+}
+
+#widgets-wrapper table td {
+  min-width: 0;
+}
+
+#widgets-wrapper .tabledrag-cell-content__item {
+  min-width: 0;
+  flex: 1;
+}
+
+#widgets-wrapper table select[name$="[plugin_id]"],
+#widgets-wrapper table input[type="text"] {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Classic links table: the title field doesn't need the whole row. */
+#links-wrapper table input[name$="[title]"] {
+  max-width: 28rem;
+}
+
+.subadmin-btn-add-item {
+  white-space: nowrap;
+  hyphens: none;
+}
+
+html[data-gin-color-scheme="dark"] .subadmin-tree-hint,
+html[data-gin-color-scheme="dark"] .subadmin-field-help,
+html[data-gin-color-scheme="dark"] .subadmin-preview-title,
+html[data-gin-color-scheme="dark"] .subadmin-drag-handle,
+html[data-gin-color-scheme="dark"] .subadmin-editor-empty,
+html[data-gin-color-scheme="dark"] .subadmin-icon-btn,
+body.gin--dark-mode .subadmin-tree-hint,
+body.gin--dark-mode .subadmin-field-help,
+body.gin--dark-mode .subadmin-preview-title,
+body.gin--dark-mode .subadmin-drag-handle,
+body.gin--dark-mode .subadmin-editor-empty,
+body.gin--dark-mode .subadmin-icon-btn,
+[data-theme="dark"] .subadmin-tree-hint,
+[data-theme="dark"] .subadmin-field-help,
+[data-theme="dark"] .subadmin-preview-title,
+[data-theme="dark"] .subadmin-drag-handle,
+[data-theme="dark"] .subadmin-editor-empty,
+[data-theme="dark"] .subadmin-icon-btn {
+  color: #cbd5e1 !important;
 }

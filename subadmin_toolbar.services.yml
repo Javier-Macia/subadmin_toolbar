@@ -14,3 +14,4 @@ services:
       - '@file_url_generator'
       - '@entity_type.manager'
       - '@logger.channel.subadmin_toolbar'
+      - '@module_handler'
