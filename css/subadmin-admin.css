@@ -90,6 +90,20 @@
   padding: 1.1rem;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+}
+
+/* The editor stays in view while a long tree is scrolled. */
+.subadmin-builder-editor {
+  position: sticky;
+  top: calc(var(--drupal-displace-offset-top, 0px) + 1rem);
+  align-self: start;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
+.subadmin-visual-builder-container [hidden] {
+  display: none !important;
 }
 
 .subadmin-preview-title {
@@ -98,10 +112,15 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-text-muted, #64748b);
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.6rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.subadmin-count {
+  font-weight: 400;
+  opacity: 0.8;
 }
 
 .subadmin-btn-add-item {
@@ -124,69 +143,136 @@
   color: #ffffff;
 }
 
-.subadmin-drag-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.subadmin-tree-tools {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  min-height: 100px;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.4rem;
 }
 
-.subadmin-drag-item {
-  background-color: var(--color-bg-app, #f1f5f9);
+.subadmin-tree-filter {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.85rem;
   border: 1px solid var(--color-border, #cbd5e1);
-  border-radius: 8px;
-  padding: 0.6rem 0.75rem;
-  cursor: grab;
-  user-select: none;
-  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  box-sizing: border-box;
+  border-radius: 6px;
+  background: var(--color-bg, #ffffff);
   color: var(--color-text, #0f172a);
 }
 
-.subadmin-drag-item:active {
-  cursor: grabbing;
+.subadmin-tree-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #64748b);
 }
 
-.subadmin-drag-item.dragging {
-  opacity: 0.4;
-  transform: scale(0.98);
-  border-style: dashed;
+.is-filtering .subadmin-tree-hint {
+  visibility: hidden;
 }
 
-.subadmin-drag-item.disabled-item {
-  opacity: 0.5;
-  background-color: var(--color-bg-app, #f1f5f9);
-  filter: grayscale(80%);
+/* Scrollable tree: stays usable with hundreds of links. */
+.subadmin-tree-scroll {
+  position: relative;
+  max-height: min(70vh, 720px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px 4px 2px 0;
+}
+
+.subadmin-drag-list,
+.subadmin-drag-sublist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.subadmin-drag-list {
+  min-height: 48px;
+}
+
+/* One indentation level is exactly 24px (see INDENT in the script). */
+.subadmin-drag-sublist {
+  margin-left: 11px;
+  padding-left: 12px;
+  border-left: 1px solid var(--color-border, #cbd5e1);
+}
+
+.subadmin-drag-item {
+  margin: 0;
+  padding: 0;
+  color: var(--color-text, #0f172a);
 }
 
 .subadmin-drag-item-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  flex-wrap: nowrap;
+  gap: 0.35rem;
+  min-height: 36px;
+  margin: 2px 0;
+  padding: 0 0.4rem 0 0.2rem;
+  background-color: var(--color-bg-app, #f1f5f9);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  box-sizing: border-box;
+  font-size: 0.88rem;
+  transition: background 0.12s ease, border-color 0.12s ease;
 }
 
-.subadmin-drag-item-left {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
-  font-size: 0.88rem;
-  min-width: 0;
-  flex: 1;
+.subadmin-drag-item-header:hover {
+  border-color: var(--color-border, #cbd5e1);
+}
+
+.subadmin-drag-item.is-active > .subadmin-drag-item-header {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
+}
+
+.subadmin-drag-item.disabled-item > .subadmin-drag-item-header {
+  opacity: 0.55;
+}
+
+.subadmin-drag-item.is-collapsed > .subadmin-drag-sublist {
+  display: none;
+}
+
+/* Collapse caret: only branches have one, the space is kept for alignment. */
+.subadmin-btn-collapse {
+  visibility: hidden;
+  padding: 0.1rem;
+}
+
+.subadmin-drag-item.has-children > .subadmin-drag-item-header .subadmin-btn-collapse {
+  visibility: visible;
+}
+
+.subadmin-btn-collapse .material-symbols-outlined {
+  font-size: 20px;
+  transition: transform 0.15s ease;
+}
+
+.subadmin-drag-item.is-collapsed > .subadmin-drag-item-header .subadmin-btn-collapse .material-symbols-outlined {
+  transform: rotate(-90deg);
 }
 
 .subadmin-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0.3rem 0.1rem;
+  border: none;
+  border-radius: 6px;
+  background: none;
   color: var(--color-text-muted, #94a3b8);
   cursor: grab;
-  flex-shrink: 0;
+  touch-action: none;
+}
+
+.subadmin-drag-handle:hover,
+.subadmin-drag-handle:focus-visible {
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.1);
 }
 
 .subadmin-item-icon {
@@ -199,19 +285,48 @@
   color: #2563eb;
 }
 
+.subadmin-item-icon .material-symbols-outlined,
+.subadmin-item-icon [class^="material-icons"] {
+  font-size: 20px;
+}
+
 .subadmin-item-title-text {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
 }
 
+.subadmin-item-title-text.is-untitled {
+  font-style: italic;
+  opacity: 0.7;
+}
 
-.subadmin-drag-item-actions {
+/* Row actions appear on hover/focus to keep long lists calm. */
+.subadmin-item-actions {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.25rem;
   flex-shrink: 0;
+}
+
+.subadmin-item-actions .subadmin-icon-btn {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.subadmin-drag-item-header:hover .subadmin-icon-btn,
+.subadmin-drag-item-header:focus-within .subadmin-icon-btn,
+.subadmin-drag-item.is-active > .subadmin-drag-item-header .subadmin-icon-btn {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .subadmin-item-actions .subadmin-icon-btn {
+    opacity: 1;
+  }
 }
 
 .subadmin-icon-btn {
@@ -249,12 +364,9 @@
 .subadmin-slider {
   position: absolute;
   cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background-color: #94a3b8;
-  transition: .2s;
+  transition: 0.2s;
   border-radius: 16px;
 }
 
@@ -266,31 +378,128 @@
   left: 2px;
   bottom: 2px;
   background-color: white;
-  transition: .2s;
+  transition: 0.2s;
   border-radius: 50%;
 }
 
-input:checked+.subadmin-slider {
+input:checked + .subadmin-slider {
   background-color: #2563eb;
 }
 
-input:checked+.subadmin-slider:before {
+input:checked + .subadmin-slider:before {
   transform: translateX(14px);
 }
 
-/* Sub-items dropzone responsive padding */
-.subadmin-drag-sublist {
-  list-style: none;
-  margin: 0;
-  padding-left: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  border-left: 2px dashed #cbd5e1;
-  min-height: 8px;
+input:focus-visible + .subadmin-slider {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Dragging: the source dims, a ghost follows the pointer and a line shows
+   where (and at which level) the item will land. */
+.subadmin-drag-item.dragging {
+  opacity: 0.35;
+}
+
+.subadmin-is-dragging,
+.subadmin-is-dragging * {
+  cursor: grabbing !important;
+  user-select: none;
+}
+
+.subadmin-drag-ghost {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  background: var(--color-bg, #ffffff);
+  border: 1px solid #2563eb;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.22);
+  transform: rotate(-0.6deg);
+  opacity: 0.95;
+}
+
+.subadmin-drag-ghost .subadmin-item-actions,
+.subadmin-drag-ghost .subadmin-btn-collapse {
+  display: none;
+}
+
+.subadmin-drop-indicator {
+  position: absolute;
+  height: 3px;
+  margin-top: -1px;
+  border-radius: 2px;
+  background: #2563eb;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.subadmin-drop-indicator::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #2563eb;
+}
+
+/* Filtering: show matches with their ancestors, reordering is paused. */
+.is-filtering .subadmin-drag-item.is-filtered-out {
+  display: none;
+}
+
+.is-filtering .subadmin-drag-item.is-collapsed > .subadmin-drag-sublist {
+  display: block;
+}
+
+.is-filtering .subadmin-drag-handle {
+  pointer-events: none;
+  opacity: 0.35;
+}
+
+.is-filtering .subadmin-drag-item.is-match > .subadmin-drag-item-header {
+  background-color: rgba(37, 99, 235, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .subadmin-drag-item-header,
+  .subadmin-btn-collapse .material-symbols-outlined,
+  .subadmin-slider,
+  .subadmin-slider:before {
+    transition: none;
+  }
+
+  .subadmin-drag-ghost {
+    transform: none;
+  }
 }
 
 /* Form inputs & Roles list */
+.subadmin-editor-empty .material-symbols-outlined {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.5;
+}
+
+.subadmin-editor-heading {
+  margin: 0 0 0.5rem;
+  color: var(--color-text, #0f172a);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.subadmin-editor-heading .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+.subadmin-field-help {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #64748b);
+}
+
 .subadmin-editor-empty {
   display: flex;
   flex-direction: column;
@@ -315,7 +524,11 @@ input:checked+.subadmin-slider:before {
   gap: 0.4rem;
 }
 
-.subadmin-form-group label {
+.subadmin-form-group label,
+.subadmin-form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--color-text, #1e293b);
@@ -348,6 +561,10 @@ input:checked+.subadmin-slider:before {
   padding: 0.85rem;
   border-radius: 6px;
   border: 1px solid var(--color-border, #cbd5e1);
+}
+
+.subadmin-form-group .subadmin-role-item {
+  flex-direction: row;
 }
 
 .subadmin-role-item {
@@ -402,14 +619,17 @@ body.theme-dark .subadmin-builder-editor,
   border-color: #334155 !important;
 }
 
-html[data-gin-color-scheme="dark"] .subadmin-drag-item,
-body.gin--dark-mode .subadmin-drag-item,
-body.theme-dark .subadmin-drag-item,
-[data-theme="dark"] .subadmin-drag-item,
-[data-theme="dark"] :root .subadmin-drag-item,
-.gin--dark-mode .subadmin-drag-item {
+html[data-gin-color-scheme="dark"] .subadmin-drag-item-header,
+html[data-gin-color-scheme="dark"] .subadmin-tree-filter,
+body.gin--dark-mode .subadmin-drag-item-header,
+body.gin--dark-mode .subadmin-tree-filter,
+body.theme-dark .subadmin-drag-item-header,
+body.theme-dark .subadmin-tree-filter,
+[data-theme="dark"] .subadmin-drag-item-header,
+[data-theme="dark"] .subadmin-tree-filter,
+.gin--dark-mode .subadmin-drag-item-header,
+.gin--dark-mode .subadmin-tree-filter {
   background-color: #1e293b !important;
-  border-color: #334155 !important;
   color: #f8fafc !important;
 }
 
