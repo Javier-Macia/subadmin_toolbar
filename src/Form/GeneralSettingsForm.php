@@ -76,8 +76,8 @@ class GeneralSettingsForm extends ToolbarFormBase {
 
     $form['toolbar_icon'] = [
       '#type' => 'managed_file',
-      '#title' => $this->t('Toolbar Brand Icon (Image)'),
-      '#description' => $this->t('Upload an image/logo to replace the default SVG logomark. Recommended size: 24x24px to 48x48px (transparent PNG or SVG).'),
+      '#title' => $this->t('Toolbar logo'),
+      '#description' => $this->t('Upload a logo to replace the default one. Recommended size: between 24x24 and 48x48 pixels (PNG or SVG with transparent background).'),
       '#upload_location' => 'public://subadmin_toolbar_icons/',
       '#upload_validators' => [
         'FileExtension' => ['extensions' => 'png gif jpg jpeg svg'],
@@ -87,8 +87,8 @@ class GeneralSettingsForm extends ToolbarFormBase {
 
     $form['hide_icon'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Hide Toolbar Icon'),
-      '#description' => $this->t('Check this to remove the logo/icon entirely from the toolbar brand area.'),
+      '#title' => $this->t('Hide the logo'),
+      '#description' => $this->t('Show only the title, without any logo.'),
       '#default_value' => (bool) $config->get('hide_icon'),
     ];
 
@@ -104,7 +104,7 @@ class GeneralSettingsForm extends ToolbarFormBase {
 
     $form['icons_package'] = [
       '#type' => 'details',
-      '#title' => $this->t('Icon Packages (Fonts)'),
+      '#title' => $this->t('Icon fonts'),
       '#open' => TRUE,
     ];
 
@@ -112,18 +112,18 @@ class GeneralSettingsForm extends ToolbarFormBase {
       '#type' => 'item',
       '#title' => $this->t('Google Material Icons & Symbols'),
       '#plain_text' => $material_local
-        ? $this->t('Local: served via @module', ['@module' => 'native_material'])
-        : $this->t('CDN: served via Google Fonts'),
-      '#description' => $this->t('Always active for the toolbar. Enable the %sub module to serve these fonts locally.', ['%sub' => 'subadmin_toolbar_local_material_icons']),
+        ? $this->t('Served from this site (@module)', ['@module' => 'native_material'])
+        : $this->t('Loaded from Google Fonts'),
+      '#description' => $this->t('Always on. To load these icons from this site instead of Google, which is better for privacy, enable the %sub module.', ['%sub' => 'subadmin_toolbar_local_material_icons']),
     ];
 
     $form['icons_package']['enable_font_awesome'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Enable Font Awesome'),
-      '#description' => $this->t('Check this to allow Font Awesome (fa-*) icons. Status: @status.', [
+      '#description' => $this->t('Lets you use Font Awesome icons in the links. They are currently @status.', [
         '@status' => $fontawesome_local
-          ? $this->t('Local: served via @module', ['@module' => 'native_fontawesome'])
-          : $this->t('CDN: served via cdnjs.cloudflare.com'),
+          ? $this->t('served from this site (@module)', ['@module' => 'native_fontawesome'])
+          : $this->t('loaded from cdnjs.cloudflare.com'),
       ]),
       '#default_value' => (bool) $config->get('enable_font_awesome'),
     ];
@@ -171,7 +171,26 @@ class GeneralSettingsForm extends ToolbarFormBase {
       ->set('enable_font_awesome', (bool) $form_state->getValue('enable_font_awesome'))
       ->save();
 
+    if (self::contrastAgainstWhite((string) $form_state->getValue('accent_color')) < 3) {
+      $this->messenger()->addWarning($this->t('The accent color has low contrast against the white toolbar, so the focus ring and hover state may be hard to see. Choose a darker color.'));
+    }
+
     parent::submitForm($form, $form_state);
+  }
+
+  /**
+   * Calculates the WCAG contrast ratio of a hex color against white.
+   */
+  protected static function contrastAgainstWhite(string $hex): float {
+    if (!preg_match('/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i', $hex, $m)) {
+      return 21.0;
+    }
+    $luminance = 0.0;
+    foreach ([0.2126, 0.7152, 0.0722] as $i => $weight) {
+      $c = hexdec($m[$i + 1]) / 255;
+      $luminance += $weight * ($c <= 0.03928 ? $c / 12.92 : (($c + 0.055) / 1.055) ** 2.4);
+    }
+    return 1.05 / ($luminance + 0.05);
   }
 
 }

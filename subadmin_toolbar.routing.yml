@@ -2,7 +2,7 @@ subadmin_toolbar.settings:
   path: '/admin/config/user-interface/subadmin-toolbar'
   defaults:
     _form: '\Drupal\subadmin_toolbar\Form\GeneralSettingsForm'
-    _title: 'Subadmin Toolbar - General Settings'
+    _title: 'Subadmin Toolbar: General settings'
   requirements:
     _permission: 'administer site configuration'
 
@@ -10,7 +10,7 @@ subadmin_toolbar.links_settings:
   path: '/admin/config/user-interface/subadmin-toolbar/links'
   defaults:
     _form: '\Drupal\subadmin_toolbar\Form\SettingsForm'
-    _title: 'Subadmin Toolbar - Menu Links'
+    _title: 'Subadmin Toolbar: Menu links'
   requirements:
     _permission: 'administer site configuration'
 
@@ -18,6 +18,6 @@ subadmin_toolbar.widgets_settings:
   path: '/admin/config/user-interface/subadmin-toolbar/widgets'
   defaults:
     _form: '\Drupal\subadmin_toolbar\Form\WidgetsSettingsForm'
-    _title: 'Subadmin Toolbar - Widgets'
+    _title: 'Subadmin Toolbar: Widgets'
   requirements:
     _permission: 'administer site configuration'

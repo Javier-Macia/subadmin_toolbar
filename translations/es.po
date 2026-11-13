@@ -1,0 +1,339 @@
+# Spanish translation of Subadmin Toolbar.
+msgid ""
+msgstr ""
+"Project-Id-Version: subadmin_toolbar\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Other"
+msgstr "Otros"
+
+msgid "Select the blocks to place as widgets at the right end of the Subadmin Toolbar. You can configure the specific options of each block in its \"Options\" panel."
+msgstr "Selecciona los bloques que quieres colocar como widgets en el extremo derecho de la barra. Las opciones específicas de cada bloque están en su panel «Opciones»."
+
+msgid "Block"
+msgstr "Bloque"
+
+msgid "Configuration and options"
+msgstr "Configuración y opciones"
+
+msgid "Weight"
+msgstr "Peso"
+
+msgid "Operations"
+msgstr "Operaciones"
+
+msgid "No widgets configured. Click \"Add widget\" below."
+msgstr "No hay widgets configurados. Pulsa «Añadir widget» más abajo."
+
+msgid "- Select block -"
+msgstr "- Selecciona un bloque -"
+
+msgid "Options"
+msgstr "Opciones"
+
+msgid "Status"
+msgstr "Estado"
+
+msgid "Enabled"
+msgstr "Activado"
+
+msgid "Disabled"
+msgstr "Desactivado"
+
+msgid "Custom title (optional)"
+msgstr "Título personalizado (opcional)"
+
+msgid "Leave empty to use the block's default title"
+msgstr "Déjalo vacío para usar el título habitual del bloque"
+
+msgid "Display block title"
+msgstr "Mostrar el título del bloque"
+
+msgid "Block titles are usually hidden in the toolbar."
+msgstr "Normalmente los títulos de los bloques se ocultan en la barra."
+
+msgid "Allowed roles"
+msgstr "Roles permitidos"
+
+msgid "If no roles are selected, the block will be visible to all users with access to the toolbar."
+msgstr "Si no seleccionas ningún rol, el bloque lo verán todos los usuarios que tengan acceso a la barra."
+
+msgid "Block configuration (@label)"
+msgstr "Configuración del bloque (@label)"
+
+msgid "This block has no additional configuration options."
+msgstr "Este bloque no tiene más opciones de configuración."
+
+msgid "Remove"
+msgstr "Eliminar"
+
+msgid "Add widget"
+msgstr "Añadir widget"
+
+msgid "You must select a block for each widget or remove the row."
+msgstr "Debes seleccionar un bloque para cada widget o eliminar la fila."
+
+msgid "Toolbar Brand Title"
+msgstr "Título de la barra"
+
+msgid "The main title of the toolbar on the left. Leave empty to hide the text."
+msgstr "El título principal de la barra, a la izquierda. Déjalo vacío para ocultar el texto."
+
+msgid "Accent Color"
+msgstr "Color de acento"
+
+msgid "The primary hover/accent color of the toolbar."
+msgstr "El color principal de la barra al pasar el ratón o enfocar un elemento."
+
+msgid "Toolbar logo"
+msgstr "Logotipo de la barra"
+
+msgid "Upload a logo to replace the default one. Recommended size: between 24x24 and 48x48 pixels (PNG or SVG with transparent background)."
+msgstr "Sube un logotipo para sustituir el predeterminado. Tamaño recomendado: entre 24x24 y 48x48 píxeles (PNG o SVG con fondo transparente)."
+
+msgid "Hide the logo"
+msgstr "Ocultar el logotipo"
+
+msgid "Show only the title, without any logo."
+msgstr "Mostrar solo el título, sin logotipo."
+
+msgid "Toolbar Title Link"
+msgstr "Enlace del título"
+
+msgid "The URL the toolbar title links to. Leave empty to disable the link."
+msgstr "La dirección a la que lleva el título de la barra. Déjalo vacío para que no sea un enlace."
+
+msgid "Icon fonts"
+msgstr "Fuentes de iconos"
+
+msgid "Google Material Icons & Symbols"
+msgstr "Iconos y símbolos de Google Material"
+
+msgid "Served from this site (@module)"
+msgstr "Se cargan desde este sitio (@module)"
+
+msgid "Loaded from Google Fonts"
+msgstr "Se cargan desde Google Fonts"
+
+msgid "Always on. To load these icons from this site instead of Google, which is better for privacy, enable the %sub module."
+msgstr "Siempre activos. Para cargar estos iconos desde este sitio en vez de desde Google, lo que es mejor para la privacidad, activa el módulo %sub."
+
+msgid "Enable Font Awesome"
+msgstr "Activar Font Awesome"
+
+msgid "Lets you use Font Awesome icons in the links. They are currently @status."
+msgstr "Permite usar iconos de Font Awesome en los enlaces. Ahora mismo @status."
+
+msgid "served from this site (@module)"
+msgstr "se cargan desde este sitio (@module)"
+
+msgid "loaded from cdnjs.cloudflare.com"
+msgstr "se cargan desde cdnjs.cloudflare.com"
+
+msgid "Enter a path starting with \"/\" or a valid external URL."
+msgstr "Introduce una ruta que empiece por «/» o una dirección externa válida."
+
+msgid "Link Title"
+msgstr "Título del enlace"
+
+msgid "Configuration"
+msgstr "Configuración"
+
+msgid "No links added yet. Click \"Add link\" below."
+msgstr "Todavía no hay enlaces. Pulsa «Añadir enlace» más abajo."
+
+msgid "Title"
+msgstr "Título"
+
+msgid "Settings"
+msgstr "Ajustes"
+
+msgid "URL"
+msgstr "URL"
+
+msgid "e.g., /node/add"
+msgstr "p. ej., /node/add"
+
+msgid "Drupal path starting with \"/\" or full URL. Leave empty for parent container."
+msgstr "Ruta de Drupal que empiece por «/» o dirección completa. Déjalo vacío si es solo un contenedor de otros enlaces."
+
+msgid "Icon Font Family"
+msgstr "Familia de iconos"
+
+msgid "Icon Name"
+msgstr "Nombre del icono"
+
+msgid "e.g., settings (or fa-cog)"
+msgstr "p. ej., settings (o fa-cog)"
+
+msgid "Allowed Roles"
+msgstr "Roles permitidos"
+
+msgid "If no roles are selected, the link will be visible to all authorized users."
+msgstr "Si no seleccionas ningún rol, el enlace lo verán todos los usuarios con acceso a la barra."
+
+msgid "Weight for @title"
+msgstr "Peso de @title"
+
+msgid "Add link"
+msgstr "Añadir enlace"
+
+msgid "Material Symbols Outlined"
+msgstr "Material Symbols Outlined"
+
+msgid "Material Icons"
+msgstr "Material Icons"
+
+msgid "The URL of %title must start with \"/\" or be a valid external URL."
+msgstr "La URL de %title debe empezar por «/» o ser una dirección externa válida."
+
+msgid "Provides a horizontal toolbar for secondary roles. Configure its links, widgets and appearance under <a href=\":url\">Configuration &gt; User interface &gt; Subadmin Toolbar</a>, then grant the %permission permission to the roles that should see it."
+msgstr "Ofrece una barra horizontal para roles secundarios. Configura sus enlaces, widgets y aspecto en <a href=\":url\">Configuración &gt; Interfaz de usuario &gt; Subadmin Toolbar</a> y concede el permiso %permission a los roles que deban verla."
+
+msgid "Access the Subadmin Toolbar"
+msgstr "Acceder a la Subadmin Toolbar"
+
+msgid "Allowed subroles"
+msgstr "Subroles permitidos"
+
+msgid "The link is also visible to users with any of these subroles. If a subrole is selected and no role is, only the users with the subrole see it."
+msgstr "El enlace también lo ven los usuarios con alguno de estos subroles. Si seleccionas un subrole y ningún rol, solo lo verán los usuarios con ese subrole."
+
+msgid "The block is also visible to users with any of these subroles. If a subrole is selected and no role is, only the users with the subrole see it."
+msgstr "El bloque también lo ven los usuarios con alguno de estos subroles. Si seleccionas un subrole y ningún rol, solo lo verán los usuarios con ese subrole."
+
+msgid "Subadmin toolbar"
+msgstr "Barra de subadministración"
+
+msgid "Toggle menu"
+msgstr "Mostrar u ocultar el menú"
+
+msgid "Subadmin Toolbar menu"
+msgstr "Menú de la Subadmin Toolbar"
+
+msgid "Unsaved changes. Use \"Save configuration\" at the bottom of the page."
+msgstr "Hay cambios sin guardar. Usa «Guardar configuración» al final de la página."
+
+msgid "View"
+msgstr "Vista"
+
+msgid "Visual view"
+msgstr "Vista visual"
+
+msgid "Classic view"
+msgstr "Vista clásica"
+
+msgid "Toolbar navigation"
+msgstr "Navegación de la barra"
+
+msgid "Add"
+msgstr "Añadir"
+
+msgid "Filter links…"
+msgstr "Filtrar enlaces…"
+
+msgid "Filter links"
+msgstr "Filtrar enlaces"
+
+msgid "Expand all"
+msgstr "Desplegar todo"
+
+msgid "Collapse all"
+msgstr "Plegar todo"
+
+msgid "Drag the handle to reorder; move sideways to change the level. With the keyboard, focus a handle and use the arrow keys."
+msgstr "Arrastra el asa para reordenar y muévete hacia los lados para cambiar el nivel. Con el teclado, enfoca un asa y usa las flechas."
+
+msgid "Select a link on the left to edit its properties."
+msgstr "Selecciona un enlace de la izquierda para editar sus propiedades."
+
+msgid "Expand/collapse"
+msgstr "Desplegar/plegar"
+
+msgid "sortable"
+msgstr "ordenable"
+
+msgid "Enable/disable"
+msgstr "Activar/desactivar"
+
+msgid "Edit"
+msgstr "Editar"
+
+msgid "Untitled"
+msgstr "Sin título"
+
+msgid "Reorder @title. Use the arrow keys to move it or change its level."
+msgstr "Reordenar @title. Usa las flechas para moverlo o cambiar su nivel."
+
+msgid "Remove \"@title\" and its sub-links?"
+msgstr "¿Eliminar «@title» y sus subenlaces?"
+
+msgid "Remove \"@title\"?"
+msgstr "¿Eliminar «@title»?"
+
+msgid "Please confirm"
+msgstr "Confirma la acción"
+
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgid "@title: position @position of @total, level @level."
+msgstr "@title: posición @position de @total, nivel @level."
+
+msgid "New link"
+msgstr "Nuevo enlace"
+
+msgid "Link title"
+msgstr "Título del enlace"
+
+msgid "URL or Drupal path"
+msgstr "URL o ruta de Drupal"
+
+msgid "Icon family"
+msgstr "Familia de iconos"
+
+msgid "Icon name"
+msgstr "Nombre del icono"
+
+msgid "Suggested icons"
+msgstr "Iconos sugeridos"
+
+msgid "If the preview shows text instead of an icon, that icon name does not exist."
+msgstr "Si la vista previa muestra texto en vez de un icono, ese nombre de icono no existe."
+
+msgid "More"
+msgstr "Más"
+
+msgid "Subadmin Toolbar: General settings"
+msgstr "Subadmin Toolbar: Ajustes generales"
+
+msgid "Subadmin Toolbar: Menu links"
+msgstr "Subadmin Toolbar: Enlaces del menú"
+
+msgid "Subadmin Toolbar: Widgets"
+msgstr "Subadmin Toolbar: Widgets"
+
+msgid "General settings"
+msgstr "Ajustes generales"
+
+msgid "Menu links"
+msgstr "Enlaces del menú"
+
+msgid "Widgets"
+msgstr "Widgets"
+
+msgid "Subadmin Toolbar"
+msgstr "Subadmin Toolbar"
+
+msgid "Configure links and role access for the Subadmin Toolbar."
+msgstr "Configura los enlaces de la Subadmin Toolbar y qué roles los ven."
+
+msgid "Allow users to view the subadmin toolbar and its configured links."
+msgstr "Permite a los usuarios ver la barra de subadministración y sus enlaces."
+
+msgid "The accent color has low contrast against the white toolbar, so the focus ring and hover state may be hard to see. Choose a darker color."
+msgstr "El color de acento tiene poco contraste con la barra blanca, por lo que el anillo de foco y el estado al pasar el ratón pueden verse mal. Elige un color más oscuro."
