@@ -4,6 +4,10 @@
    ========================================================================== */
 
 /* --- Variables --- */
+
+/* Page-level defaults. Themes can override these on :root, but the color
+   variables are redefined on #subadmin-toolbar itself just below, so a :root
+   override of a color only takes effect through the appearance options. */
 :root {
     --subadmin-toolbar-height: 56px;
     --subadmin-toolbar-z-index: 502;
@@ -30,6 +34,30 @@
     --subadmin-toolbar-hover-bg: #222;
     --subadmin-toolbar-submenu-bg: #111;
     --subadmin-toolbar-border: #333;
+}
+
+/* Colors set in the appearance options. The inline style of the toolbar
+   carries --subadmin-toolbar-light-* and --subadmin-toolbar-dark-*; an unset
+   one falls back to the defaults above. These declarations sit on the
+   toolbar element, so they win over any value a theme inherits from :root or
+   from [data-theme="dark"]; the fallbacks repeat the :root defaults. */
+#subadmin-toolbar {
+    --subadmin-toolbar-bg: var(--subadmin-toolbar-light-bg, #ffffff);
+    --subadmin-toolbar-text: var(--subadmin-toolbar-light-text, #000000);
+    --subadmin-toolbar-hover-bg: var(--subadmin-toolbar-light-hover-bg, #eef1f5);
+    --subadmin-toolbar-submenu-bg: var(--subadmin-toolbar-light-submenu-bg, #ffffff);
+    --subadmin-toolbar-border: var(--subadmin-toolbar-light-border, #e6e6e6);
+}
+
+[data-theme="dark"] #subadmin-toolbar,
+[data-color-scheme="dark"] #subadmin-toolbar,
+#subadmin-toolbar[data-theme="dark"],
+#subadmin-toolbar[data-color-scheme="dark"] {
+    --subadmin-toolbar-bg: var(--subadmin-toolbar-dark-bg, #111);
+    --subadmin-toolbar-text: var(--subadmin-toolbar-dark-text, #fff);
+    --subadmin-toolbar-hover-bg: var(--subadmin-toolbar-dark-hover-bg, #222);
+    --subadmin-toolbar-submenu-bg: var(--subadmin-toolbar-dark-submenu-bg, #111);
+    --subadmin-toolbar-border: var(--subadmin-toolbar-dark-border, #333);
 }
 
 /* ==========================================================================
@@ -60,7 +88,8 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
     background-color: var(--subadmin-toolbar-bg);
     color: var(--subadmin-toolbar-text);
     z-index: var(--subadmin-toolbar-z-index);
-    box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.45);
+    box-shadow: var(--subadmin-toolbar-shadow, 0 4px 8px -3px rgba(0, 0, 0, 0.45));
+    border-bottom: var(--subadmin-toolbar-border-bottom, none);
     font-family: var(--subadmin-toolbar-font);
     display: flex;
     align-items: center;
@@ -159,6 +188,7 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
     text-decoration: none;
     font-size: var(--subadmin-toolbar-font-size);
     font-weight: var(--subadmin-toolbar-font-weight);
+    letter-spacing: var(--subadmin-toolbar-letter-spacing, normal);
     transition: background-color .2s, color .2s;
     box-sizing: border-box;
     border: none;
@@ -326,17 +356,19 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
     position: absolute;
     top: var(--subadmin-toolbar-height, 56px) !important;
     left: auto !important;
-    min-width: 220px;
+    min-width: var(--subadmin-toolbar-submenu-min-width, 220px);
     background-color: var(--subadmin-toolbar-submenu-bg);
     list-style: none;
     margin: 0;
     padding: 8px 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, .4);
-    border-radius: 0 0 4px 4px;
+    box-shadow: var(--subadmin-toolbar-submenu-shadow, 0 4px 12px rgba(0, 0, 0, .4));
+    border-radius: 0 0 var(--subadmin-toolbar-radius, 4px) var(--subadmin-toolbar-radius, 4px);
     z-index: calc(var(--subadmin-toolbar-z-index) + 1);
     visibility: hidden;
     opacity: 0;
     pointer-events: none;
+    /* Hiding waits for the close delay. */
+    transition: visibility 0s linear var(--subadmin-toolbar-close-delay, 0s), opacity 0s linear var(--subadmin-toolbar-close-delay, 0s);
 }
 
 #subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-submenu::before {
@@ -352,7 +384,7 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
     top: 0 !important;
     left: 100% !important;
     margin-top: -8px;
-    border-radius: 4px;
+    border-radius: var(--subadmin-toolbar-radius, 4px);
 }
 
 #subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item:hover>.subadmin-toolbar-submenu,
@@ -362,6 +394,13 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
     visibility: visible;
     opacity: 1;
     pointer-events: auto;
+    transition-delay: 0s;
+}
+
+/* Only the pointer waits for the open delay; keyboard focus opens at once. */
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item:hover>.subadmin-toolbar-submenu,
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-subitem:hover>.subadmin-toolbar-submenu {
+    transition-delay: var(--subadmin-toolbar-open-delay, 0s);
 }
 
 /* Escape hides a menu opened by hover until the pointer leaves (WCAG 1.4.13). */
@@ -370,6 +409,7 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
     visibility: hidden;
     opacity: 0;
     pointer-events: none;
+    transition-delay: 0s;
 }
 
 #subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item.has-submenu:hover>.subadmin-toolbar-link .subadmin-toolbar-caret,
@@ -981,7 +1021,7 @@ body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:ha
     height: 32px;
     width: 30px;
     margin-right: 8px;
-    border-radius: 8px;
+    border-radius: var(--subadmin-toolbar-radius, 8px);
 }
 
 #subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item.is-linked>.subadmin-toolbar-split::before {
@@ -1022,4 +1062,69 @@ body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:ha
     #subadmin-toolbar .subadmin-toolbar-split .subadmin-toolbar-caret {
         transition: none;
     }
+}
+
+/* ==========================================================================
+   Appearance options (data attributes set from the general settings)
+   ========================================================================== */
+
+/* Horizontal padding of the top-level items. It has more weight than the
+   base rule and less than the linked-parent rule, which keeps its own
+   right padding next to the split button. */
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-link {
+    padding-left: var(--subadmin-toolbar-item-padding, 16px);
+    padding-right: var(--subadmin-toolbar-item-padding, 16px);
+}
+
+/* Icons inside submenus can be hidden. */
+#subadmin-toolbar[data-submenu-icons="hidden"] .subadmin-toolbar-submenu .subadmin-toolbar-icon {
+    display: none;
+}
+
+/* Parent indicator: plus_minus swaps the glyph and keeps it still. */
+#subadmin-toolbar[data-indicator="plus_minus"] .subadmin-toolbar-caret {
+    font-size: 0 !important;
+    transform: none !important;
+}
+
+#subadmin-toolbar[data-indicator="plus_minus"] .subadmin-toolbar-caret::before {
+    content: "add";
+    font-size: 18px;
+}
+
+#subadmin-toolbar[data-indicator="plus_minus"]:not(.is-narrow) .has-submenu:hover>a .subadmin-toolbar-caret::before,
+#subadmin-toolbar[data-indicator="plus_minus"]:not(.is-narrow) .has-submenu:hover>.subadmin-toolbar-split .subadmin-toolbar-caret::before,
+#subadmin-toolbar[data-indicator="plus_minus"] .has-submenu.is-open>a .subadmin-toolbar-caret::before,
+#subadmin-toolbar[data-indicator="plus_minus"] .has-submenu.is-open>.subadmin-toolbar-split .subadmin-toolbar-caret::before,
+#subadmin-toolbar[data-indicator="plus_minus"] .has-submenu.is-expanded>a .subadmin-toolbar-caret::before,
+#subadmin-toolbar[data-indicator="plus_minus"] .has-submenu.is-expanded>.subadmin-toolbar-split .subadmin-toolbar-caret::before {
+    content: "remove";
+}
+
+#subadmin-toolbar[data-indicator="plus_minus"].is-narrow .has-submenu.is-linked>.subadmin-toolbar-split .subadmin-toolbar-caret::before {
+    font-size: 24px;
+}
+
+/* Parent indicator: none hides the caret. A split button keeps a visible
+   text label so it stays recognizable and usable. */
+#subadmin-toolbar[data-indicator="none"] .subadmin-toolbar-caret {
+    display: none !important;
+}
+
+.subadmin-toolbar-split-label {
+    display: none;
+}
+
+#subadmin-toolbar[data-indicator="none"] .subadmin-toolbar-split-label {
+    display: inline;
+    padding: 0 10px;
+    font-size: 12px;
+    font-weight: var(--subadmin-toolbar-font-weight);
+    white-space: nowrap;
+}
+
+#subadmin-toolbar[data-indicator="none"]:not(.is-narrow) .subadmin-toolbar-item.is-linked>.subadmin-toolbar-split,
+#subadmin-toolbar[data-indicator="none"]:not(.is-narrow) .subadmin-toolbar-subitem.is-linked>.subadmin-toolbar-split,
+#subadmin-toolbar[data-indicator="none"].is-narrow .has-submenu.is-linked>.subadmin-toolbar-split {
+    width: auto;
 }

@@ -35,6 +35,8 @@ function subadmin_toolbar_theme(array $existing, string $type, string $theme, st
         'accent_color' => NULL,
         'toolbar_title_link' => NULL,
         'hide_icon' => FALSE,
+        'style_vars' => [],
+        'appearance' => [],
       ],
     ],
   ];

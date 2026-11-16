@@ -17,6 +17,7 @@ admin_form:
       css/subadmin-admin.css: {}
   js:
     js/subadmin-admin.js: {}
+    js/subadmin-preview.js: {}
   dependencies:
     - core/drupalSettings
     - core/once

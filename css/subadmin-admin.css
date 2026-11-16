@@ -867,3 +867,102 @@ body.gin--dark-mode .subadmin-icon-btn,
 [data-theme="dark"] .subadmin-icon-btn {
   color: #cbd5e1 !important;
 }
+
+/* Live preview of the appearance options (general settings form) */
+.subadmin-toolbar-preview-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.sat-preview {
+  --sat-preview-bg: #ffffff;
+  --sat-preview-text: #000000;
+  --sat-preview-hover-bg: #eef1f5;
+  --sat-preview-submenu-bg: #ffffff;
+  --sat-preview-border: #e6e6e6;
+  padding-bottom: 0.5rem;
+  font-family: var(--sat-preview-font, inherit);
+  font-size: var(--sat-preview-font-size, 14px);
+  font-weight: var(--sat-preview-font-weight, 500);
+  letter-spacing: var(--sat-preview-letter-spacing, 0);
+}
+
+.sat-preview[data-preview-mode="dark"] {
+  --sat-preview-bg: #111111;
+  --sat-preview-text: #ffffff;
+  --sat-preview-hover-bg: #222222;
+  --sat-preview-submenu-bg: #111111;
+  --sat-preview-border: #333333;
+}
+
+.sat-preview__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: var(--sat-preview-height, 56px);
+  padding: 0 0.75rem;
+  box-sizing: border-box;
+  background-color: var(--sat-preview-bg);
+  color: var(--sat-preview-text);
+  box-shadow: var(--sat-preview-shadow, 0 4px 8px -3px rgba(0, 0, 0, 0.45));
+}
+
+.sat-preview--line .sat-preview__bar {
+  border-bottom: 1px solid var(--sat-preview-border);
+}
+
+.sat-preview__brand {
+  margin-right: 0.75rem;
+  font-weight: 600;
+}
+
+.sat-preview__item {
+  display: inline-flex;
+  align-items: center;
+  align-self: stretch;
+  padding: 0 var(--sat-preview-item-padding, 12px);
+}
+
+.sat-preview__item--hover {
+  background-color: var(--sat-preview-hover-bg);
+}
+
+.sat-preview__caret,
+.sat-preview__icon {
+  font-size: 18px;
+}
+
+.sat-preview__icon {
+  margin-right: 0.5rem;
+  font-size: var(--sat-preview-icon-size, 24px);
+  opacity: var(--sat-preview-icon-opacity, 0.7);
+}
+
+.sat-preview--no-icons .sat-preview__icon {
+  display: none;
+}
+
+.sat-preview__submenu {
+  display: flex;
+  flex-direction: column;
+  width: 12rem;
+  margin-left: 4.5rem;
+  padding: 0.5rem 0;
+  background-color: var(--sat-preview-submenu-bg);
+  color: var(--sat-preview-text);
+  border: 1px solid var(--sat-preview-border);
+  border-radius: 0 0 var(--sat-preview-radius, 4px) var(--sat-preview-radius, 4px);
+  box-shadow: var(--sat-preview-shadow, 0 4px 12px rgba(0, 0, 0, 0.4));
+}
+
+.sat-preview__subitem {
+  display: flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+}
+
+.subadmin-contrast-hint p {
+  margin: 0.25rem 0;
+}
