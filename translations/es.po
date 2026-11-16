@@ -337,3 +337,6 @@ msgstr "Permite a los usuarios ver la barra de subadministración y sus enlaces.
 
 msgid "The accent color has low contrast against the white toolbar, so the focus ring and hover state may be hard to see. Choose a darker color."
 msgstr "El color de acento tiene poco contraste con la barra blanca, por lo que el anillo de foco y el estado al pasar el ratón pueden verse mal. Elige un color más oscuro."
+
+msgid "Toggle submenu of @title"
+msgstr "Mostrar u ocultar el submenú de @title"

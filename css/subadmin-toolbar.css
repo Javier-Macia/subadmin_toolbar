@@ -845,3 +845,181 @@ body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:ha
   max-width: 100%;
   object-fit: contain;
 }
+
+/* ==========================================================================
+   Padre con enlace (.is-linked) vs. contenedor (.is-wrapper)
+   - .is-wrapper: toda la fila abre el submenú; no navega.
+   - .is-linked: botón dividido. El enlace navega; el botón .subadmin-toolbar-split,
+     a su lado y separado por un divisor neutro, abre el submenú.
+   ========================================================================== */
+#subadmin-toolbar .has-submenu.is-wrapper>a {
+    cursor: default;
+}
+
+#subadmin-toolbar .has-submenu.is-linked {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+
+#subadmin-toolbar .subadmin-toolbar-split {
+    position: relative;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--subadmin-toolbar-text);
+    font: inherit;
+    cursor: pointer;
+    transition: background-color .2s;
+}
+
+#subadmin-toolbar .subadmin-toolbar-split .subadmin-toolbar-caret {
+    margin: 0;
+    opacity: .7;
+    pointer-events: none;
+    transition: transform .2s, opacity .2s;
+}
+
+/* Divisor neutro entre el enlace y el botón. */
+#subadmin-toolbar .subadmin-toolbar-split::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 25%;
+    bottom: 25%;
+    width: 1px;
+    background-color: var(--subadmin-toolbar-border);
+}
+
+#subadmin-toolbar .subadmin-toolbar-split:hover,
+#subadmin-toolbar .subadmin-toolbar-split:focus-visible {
+    background-color: var(--subadmin-toolbar-hover-bg);
+}
+
+#subadmin-toolbar .subadmin-toolbar-split:hover .subadmin-toolbar-caret,
+#subadmin-toolbar .subadmin-toolbar-split:focus-visible .subadmin-toolbar-caret {
+    opacity: 1;
+}
+
+#subadmin-toolbar .subadmin-toolbar-split:focus-visible {
+    outline: 2px solid var(--subadmin-toolbar-accent);
+    outline-offset: -2px;
+}
+
+/* Escritorio. */
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item.is-linked>.subadmin-toolbar-link {
+    padding-right: 10px;
+}
+
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item.is-linked>.subadmin-toolbar-split {
+    width: 32px;
+}
+
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-subitem.is-linked>.subadmin-toolbar-sublink {
+    flex: 1 1 auto;
+}
+
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-subitem.is-linked>.subadmin-toolbar-split {
+    width: 40px;
+}
+
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item.is-linked:hover>.subadmin-toolbar-split .subadmin-toolbar-caret,
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item.is-linked.is-open>.subadmin-toolbar-split .subadmin-toolbar-caret {
+    transform: rotate(180deg);
+}
+
+/* Móvil: botón de al menos 48px de ancho, a toda la altura de la fila. */
+#subadmin-toolbar.is-narrow .has-submenu.is-linked>.subadmin-toolbar-link,
+#subadmin-toolbar.is-narrow .has-submenu.is-linked>.subadmin-toolbar-sublink {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    padding-right: 16px;
+}
+
+#subadmin-toolbar.is-narrow .has-submenu.is-linked>.subadmin-toolbar-split {
+    width: 56px;
+    min-height: 48px;
+}
+
+#subadmin-toolbar.is-narrow .has-submenu.is-linked>.subadmin-toolbar-split::before {
+    top: 20%;
+    bottom: 20%;
+}
+
+#subadmin-toolbar.is-narrow .has-submenu.is-linked>.subadmin-toolbar-split .subadmin-toolbar-caret {
+    font-size: 24px;
+}
+
+#subadmin-toolbar.is-narrow .has-submenu.is-linked.is-expanded>.subadmin-toolbar-split {
+    background-color: var(--subadmin-toolbar-hover-bg);
+}
+
+#subadmin-toolbar.is-narrow .subadmin-toolbar-item.is-linked.is-expanded>.subadmin-toolbar-split .subadmin-toolbar-caret {
+    transform: rotate(180deg);
+}
+
+#subadmin-toolbar.is-narrow .subadmin-toolbar-subitem.is-linked.is-expanded>.subadmin-toolbar-split .subadmin-toolbar-caret {
+    transform: rotate(90deg);
+}
+
+#subadmin-toolbar.is-narrow .has-submenu.is-linked>.subadmin-toolbar-submenu {
+    flex: 0 0 100%;
+}
+
+/* --- Refinado del botón dividido --- */
+
+/* Escritorio: el botón es una píldora ligeramente hundida, no un bloque de altura completa. */
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item.is-linked>.subadmin-toolbar-split {
+    align-self: center;
+    height: 32px;
+    width: 30px;
+    margin-right: 8px;
+    border-radius: 8px;
+}
+
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item.is-linked>.subadmin-toolbar-split::before {
+    display: none;
+}
+
+/* Al abrir, el botón queda marcado, no solo el caret. */
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item.is-linked.is-open>.subadmin-toolbar-split,
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item.is-linked:hover>.subadmin-toolbar-split {
+    background-color: var(--subadmin-toolbar-hover-bg);
+}
+
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item.is-linked:hover>.subadmin-toolbar-split .subadmin-toolbar-caret,
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-item.is-linked.is-open>.subadmin-toolbar-split .subadmin-toolbar-caret {
+    opacity: 1;
+}
+
+/* Móvil: la zona del botón se ve siempre como zona aparte, con un fondo suave. */
+#subadmin-toolbar.is-narrow .has-submenu.is-linked>.subadmin-toolbar-split {
+    background-color: color-mix(in srgb, var(--subadmin-toolbar-hover-bg) 55%, transparent);
+}
+
+#subadmin-toolbar.is-narrow .has-submenu.is-linked>.subadmin-toolbar-split .subadmin-toolbar-caret {
+    opacity: 1;
+}
+
+#subadmin-toolbar.is-narrow .has-submenu.is-linked>.subadmin-toolbar-split::before {
+    top: 0;
+    bottom: 0;
+}
+
+#subadmin-toolbar .subadmin-toolbar-split:active {
+    background-color: var(--subadmin-toolbar-hover-bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #subadmin-toolbar .subadmin-toolbar-split,
+    #subadmin-toolbar .subadmin-toolbar-split .subadmin-toolbar-caret {
+        transition: none;
+    }
+}

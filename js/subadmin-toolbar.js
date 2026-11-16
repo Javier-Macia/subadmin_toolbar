@@ -121,6 +121,11 @@
     return li.querySelector(':scope > a, :scope > button');
   }
 
+  /** The element that discloses the submenu: the split button of a linked parent, else the trigger. */
+  function disclosureOf(li) {
+    return li.querySelector(':scope > .subadmin-toolbar-split') || triggerOf(li);
+  }
+
   function childItems(ul) {
     return Array.from(ul.children).filter(function (el) { return el.tagName === 'LI'; });
   }
@@ -129,7 +134,7 @@
    * Keeps aria-expanded of a submenu trigger in sync with its state.
    */
   function syncAria(li) {
-    var trigger = triggerOf(li);
+    var trigger = disclosureOf(li);
     if (!trigger || !li.classList.contains('has-submenu')) return;
     var open = li.classList.contains('is-open') || li.classList.contains('is-expanded');
     trigger.setAttribute('aria-expanded', String(open));
@@ -137,7 +142,7 @@
 
   function initAria(root) {
     root.querySelectorAll('.has-submenu').forEach(function (li) {
-      var trigger = triggerOf(li);
+      var trigger = disclosureOf(li);
       if (trigger) {
         trigger.setAttribute('aria-haspopup', 'true');
         syncAria(li);
@@ -183,7 +188,7 @@
    * Keyboard support of the menu (disclosure pattern with arrow keys).
    */
   function onMenuKeydown(e) {
-    var trigger = e.target.closest('.subadmin-toolbar-link, .subadmin-toolbar-sublink');
+    var trigger = e.target.closest('.subadmin-toolbar-link, .subadmin-toolbar-sublink, .subadmin-toolbar-split');
     var root = menu();
     if (!trigger || !root || !root.contains(trigger) || e.altKey || e.ctrlKey || e.metaKey) return;
 
@@ -327,7 +332,7 @@
       link.classList.toggle('subadmin-toolbar-link', !toSub);
       link.classList.toggle('subadmin-toolbar-sublink', toSub);
     }
-    var caret = li.querySelector(':scope > a > .subadmin-toolbar-caret');
+    var caret = li.querySelector(':scope > a > .subadmin-toolbar-caret, :scope > .subadmin-toolbar-split > .subadmin-toolbar-caret');
     if (caret) caret.textContent = toSub ? 'chevron_right' : 'expand_more';
     if (!toSub) li.classList.remove('is-open', 'is-expanded');
   }
@@ -376,7 +381,13 @@
       // Submenús en modo compacto.
       once('sat-caret', '.subadmin-toolbar-caret, .has-submenu > a[href="#"]', context).forEach(function (el) {
         el.addEventListener('click', function (e) {
-          if (!bar || (!bar.classList.contains('is-narrow') && window.innerWidth > 768)) return;
+          // The split button has its own handler.
+          if (!bar || this.closest('.subadmin-toolbar-split')) return;
+          if (!bar.classList.contains('is-narrow') && window.innerWidth > 768) {
+            // Desktop: a wrapper parent ("#") only shows its submenu; don't jump to the top.
+            if (this.closest('a[href="#"]')) e.preventDefault();
+            return;
+          }
           e.preventDefault();
           e.stopPropagation();
           var li = this.closest('.has-submenu');
@@ -386,6 +397,18 @@
             li.classList.toggle('is-expanded');
             syncAria(li);
           }
+        });
+      });
+
+      // Split button of a linked parent: opens or closes its submenu.
+      once('sat-split', '.subadmin-toolbar-split', context).forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          var li = this.closest('.has-submenu');
+          if (!li) return;
+          var open = !li.classList.contains('is-open') && !li.classList.contains('is-expanded');
+          if (open) closeAll(li);
+          setOpen(li, open);
         });
       });
 

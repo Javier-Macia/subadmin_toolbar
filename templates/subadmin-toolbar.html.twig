@@ -28,14 +28,22 @@
 {% macro render_menu_items(items, is_root) %}
   {% import _self as macros %}
   {% for link in items %}
-    <li class="{{ is_root ? 'subadmin-toolbar-item' : 'subadmin-toolbar-subitem' }}{{ link.below ? ' has-submenu' }}">
+    {# A parent without a URL (stored as "#") is only a wrapper: it opens its submenu and goes nowhere. #}
+    {% set is_linked = link.url and link.url != '#' %}
+    <li class="{{ is_root ? 'subadmin-toolbar-item' : 'subadmin-toolbar-subitem' }}{{ link.below ? ' has-submenu ' ~ (is_linked ? 'is-linked' : 'is-wrapper') }}">
       <a href="{{ link.url }}" class="{{ is_root ? 'subadmin-toolbar-link' : 'subadmin-toolbar-sublink' }}">
         {{ macros.render_icon(link) }}
         <span class="subadmin-toolbar-text">{{ link.title }}</span>
-        {% if link.below %}
+        {% if link.below and not is_linked %}
           <span class="subadmin-toolbar-caret material-symbols-outlined" translate="no" aria-hidden="true">{{ is_root ? 'expand_more' : 'chevron_right' }}</span>
         {% endif %}
       </a>
+      {# A linked parent gets its own button: the link navigates, the button opens the submenu. #}
+      {% if link.below and is_linked %}
+        <button type="button" class="subadmin-toolbar-split" aria-expanded="false" aria-label="{{ 'Toggle submenu of @title'|t({'@title': link.title}) }}">
+          <span class="subadmin-toolbar-caret material-symbols-outlined" translate="no" aria-hidden="true">{{ is_root ? 'expand_more' : 'chevron_right' }}</span>
+        </button>
+      {% endif %}
       {% if link.below %}
         <ul class="subadmin-toolbar-submenu">
           {{ macros.render_menu_items(link.below, false) }}
