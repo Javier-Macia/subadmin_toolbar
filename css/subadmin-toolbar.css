@@ -484,6 +484,11 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
     position: static;
     box-shadow: none;
     background-color: rgba(128, 128, 128, .05);
+    /* Global list styles add margins; the indentation comes from the links. */
+    margin: 0;
+    list-style: none;
+    box-sizing: border-box;
+    border-radius: 0;
     padding: 0;
     display: none;
     width: 100%;
@@ -659,6 +664,10 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
         position: static;
         box-shadow: none;
         background-color: rgba(128, 128, 128, .05);
+        margin: 0;
+        list-style: none;
+        box-sizing: border-box;
+        border-radius: 0;
         padding: 0;
         display: none;
         width: 100%;
