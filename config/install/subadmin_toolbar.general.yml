@@ -34,3 +34,7 @@ appearance:
   close_delay: 0
   show_submenu_icons: true
   indicator: caret
+  position: top
+  sidebar_mode: fixed
+  sidebar_width: 260
+  sidebar_start_collapsed: false

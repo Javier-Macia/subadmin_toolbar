@@ -151,4 +151,56 @@ class AppearanceTest extends UnitTestCase {
     $this->assertLessThan(4.5, $issues[0]['ratio']);
   }
 
+  /**
+   * The layout options default to the top toolbar.
+   */
+  public function testLayoutDefaults(): void {
+    $defaults = Appearance::defaults();
+    $this->assertSame('top', $defaults['position']);
+    $this->assertSame('fixed', $defaults['sidebar_mode']);
+    $this->assertSame(260, $defaults['sidebar_width']);
+    $this->assertFalse($defaults['sidebar_start_collapsed']);
+    $this->assertSame(['top', 'left', 'right'], Appearance::CHOICES['position']);
+    $this->assertSame([220, 240, 260, 280, 300, 320, 340, 360], Appearance::CHOICES['sidebar_width']);
+  }
+
+  /**
+   * Layout values outside the closed lists fall back to the defaults.
+   */
+  public function testLayoutRejectsInvalid(): void {
+    $values = Appearance::normalize([
+      'position' => 'bottom',
+      'sidebar_width' => 250,
+      'sidebar_mode' => 'x',
+      'sidebar_start_collapsed' => 'yes',
+    ]);
+    $this->assertSame('top', $values['position']);
+    $this->assertSame(260, $values['sidebar_width']);
+    $this->assertSame('fixed', $values['sidebar_mode']);
+    $this->assertFalse($values['sidebar_start_collapsed']);
+
+    $values = Appearance::normalize([
+      'position' => 'right',
+      'sidebar_mode' => 'collapsible',
+      'sidebar_start_collapsed' => '1',
+    ]);
+    $this->assertSame('right', $values['position']);
+    $this->assertSame('collapsible', $values['sidebar_mode']);
+    $this->assertTrue($values['sidebar_start_collapsed']);
+  }
+
+  /**
+   * The sidebar width is only emitted for a sidebar at a non-default width.
+   */
+  public function testSidebarWidthVariable(): void {
+    $vars = Appearance::styleVars(Appearance::normalize(['position' => 'left', 'sidebar_width' => 300]));
+    $this->assertSame('300px', $vars['--subadmin-toolbar-sidebar-width']);
+
+    $vars = Appearance::styleVars(Appearance::normalize(['position' => 'top', 'sidebar_width' => 300]));
+    $this->assertArrayNotHasKey('--subadmin-toolbar-sidebar-width', $vars);
+
+    $vars = Appearance::styleVars(Appearance::normalize(['position' => 'right']));
+    $this->assertArrayNotHasKey('--subadmin-toolbar-sidebar-width', $vars);
+  }
+
 }

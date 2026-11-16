@@ -1,5 +1,5 @@
 toolbar:
-  version: 2.2.0
+  version: 2.3.0
   css:
     theme:
       css/subadmin-toolbar.css: {}
@@ -8,7 +8,14 @@ toolbar:
   dependencies:
     - core/drupalSettings
     - core/once
+    - core/drupal.displace
     - subadmin_toolbar/material_icons
+
+sidebar_init:
+  version: 2.3.0
+  header: true
+  js:
+    js/subadmin-sidebar-init.js: { minified: true }
 
 admin_form:
   version: 1.0.0

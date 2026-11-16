@@ -18,18 +18,148 @@
   }
 
   var raf = null;
+  var adjusting = false;
+
+  /** Sets an attribute only when its value differs, so repeated passes leave the DOM untouched. */
+  function setAttr(el, name, value) {
+    if (el.getAttribute(name) !== value) el.setAttribute(name, value);
+  }
+
+  /** Removes an attribute only when it is present. */
+  function dropAttr(el, name) {
+    if (el.hasAttribute(name)) el.removeAttribute(name);
+  }
+
+  /** Writes an inline style property only when it changes. */
+  function setStyle(el, prop, value) {
+    if (el.style.getPropertyValue(prop) !== value) el.style.setProperty(prop, value);
+  }
+
+  /** Writes or clears a custom property on the root only when it changes. */
+  function setVar(name, value) {
+    var style = document.documentElement.style;
+    if (value === null) {
+      if (style.getPropertyValue(name) !== '') style.removeProperty(name);
+    }
+    else if (style.getPropertyValue(name) !== value) {
+      style.setProperty(name, value);
+    }
+  }
   var bar = null;
+  var lastLayout = null;
+
+  var STORAGE_KEY = 'subadminToolbar.sidebar';
+  var RAIL_WIDTH = 64;
+
+  /** Whether the sidebar is collapsible (and not top-positioned). */
+  function isCollapsible() {
+    return !!bar && (bar.getAttribute('data-position') || 'top') !== 'top' &&
+      bar.getAttribute('data-sidebar-mode') === 'collapsible';
+  }
+
+  /** Whether the sidebar is currently collapsed to a rail. */
+  function isCollapsed() {
+    if (!isCollapsible()) return false;
+    var stored = document.documentElement.getAttribute('data-subadmin-sidebar');
+    if (stored === 'collapsed') return true;
+    if (stored === 'expanded') return false;
+    return bar.getAttribute('data-sidebar-collapsed') === 'true';
+  }
+
+  /** Whether the submenus open as flyouts at the side of the rail (wide screens only). */
+  function isRail() {
+    return !!bar && window.innerWidth > 768 && isCollapsed();
+  }
+
+  /** Publishes where the flyouts of the rail attach (the edge facing the page). */
+  function publishFlyoutEdge() {
+    var rect = bar.getBoundingClientRect();
+    var edge = bar.getAttribute('data-position') === 'right' ? document.documentElement.clientWidth - rect.left : rect.right;
+    setStyle(bar, '--subadmin-toolbar-flyout-edge', Math.round(edge) + 'px');
+  }
+
+  /** Aligns the flyout of a top-level item with its row, keeping it inside the viewport. */
+  function positionFlyout(li) {
+    if (!isRail() || !li || !li.matches('.subadmin-toolbar-item.has-submenu')) return;
+    var sub = li.querySelector(':scope > .subadmin-toolbar-submenu');
+    if (!sub) return;
+    publishFlyoutEdge();
+    var top = li.getBoundingClientRect().top;
+    var max = window.innerHeight - sub.offsetHeight - 8;
+    setStyle(li, '--subadmin-toolbar-flyout-top', Math.round(Math.max(0, Math.min(top, max))) + 'px');
+  }
+
+  /** Brings the collapse button in line with the current state. */
+  function syncCollapseToggle() {
+    var btn = bar && bar.querySelector('.subadmin-toolbar-collapse-toggle');
+    if (!btn) return;
+    var collapsed = isCollapsed();
+    // The rail shows no text, so its top-level links carry a tooltip.
+    bar.querySelectorAll('.subadmin-toolbar-menu > .subadmin-toolbar-item > a').forEach(function (a) {
+      if (isRail()) {
+        var text = a.querySelector('.subadmin-toolbar-text');
+        if (text) setAttr(a, 'title', text.textContent.trim());
+      }
+      else {
+        dropAttr(a, 'title');
+      }
+    });
+    bar.querySelectorAll('.has-submenu').forEach(syncAria);
+    setAttr(btn, 'aria-expanded', String(!collapsed));
+    var label = btn.querySelector('[data-label-collapse]');
+    var text = label && label.getAttribute(collapsed ? 'data-label-expand' : 'data-label-collapse');
+    if (label && label.textContent !== text) label.textContent = text;
+  }
+
+  var displaceKey = '';
+  /** Width taken at the left by the bars next to this toolbar, last seen on a wide screen. */
+  var knownLeft = 0;
+
+  /** Marks the toolbar with the data-offset-* attribute of the edge it occupies, so core and contrib UI move out of its way. */
+  function publishDisplace(edge, size) {
+    var key = edge + ':' + Math.round(size);
+    if (key === displaceKey && bar.hasAttribute('data-offset-' + edge)) return;
+    displaceKey = key;
+    ['top', 'right', 'bottom', 'left'].forEach(function (name) {
+      if (name === edge) setAttr(bar, 'data-offset-' + name, String(Math.round(size)));
+      else dropAttr(bar, 'data-offset-' + name);
+    });
+    if (window.Drupal && typeof Drupal.displace === 'function') Drupal.displace(true);
+  }
+
+  /** Name of the active layout, used to drop stale open states when it changes. */
+  function layoutName(isMobile, sidebar) {
+    if (isMobile) return 'narrow';
+    if (!sidebar) return 'top';
+    return isCollapsed() ? 'rail' : 'sidebar';
+  }
 
   function _adjust() {
     raf = null;
+    if (adjusting) return;
     bar = bar || document.getElementById('subadmin-toolbar');
     if (!bar) return;
+    adjusting = true;
+    try {
+      applyLayout();
+    }
+    finally {
+      adjusting = false;
+    }
+  }
+
+  /** Reads the surrounding bars, then applies the toolbar's position and the published offsets. */
+  function applyLayout() {
 
     var mode = detectMode();
     var cs = getComputedStyle(document.documentElement);
     var top = 0;
     var left = 0;
     var w = window.innerWidth;
+    var position = bar.getAttribute('data-position') || 'top';
+    var isMobile = w <= 768;
+    // A sidebar layout only applies on wide screens; narrow ones use the hamburger menu.
+    var sidebar = position !== 'top' && !isMobile;
 
     var tbAdmin = document.getElementById('toolbar-administration');
     var tbBar   = document.getElementById('toolbar-bar');
@@ -53,55 +183,92 @@
     }
 
     // 2. Offset lateral: solo si el sidebar es visible en escritorio.
-    var sideEl = document.querySelector('aside.admin-toolbar, #admin-toolbar, #gin-toolbar-bar');
-    if (sideEl) {
+    document.querySelectorAll('aside.admin-toolbar, #admin-toolbar, #gin-toolbar-bar').forEach(function (sideEl) {
       var rect = sideEl.getBoundingClientRect();
-      if (rect.left >= 0 && rect.left < 50 && rect.width > 30 && rect.width < w / 2) {
+      if (!left && rect.left >= 0 && rect.left < 50 && rect.width > 30 && rect.width < w / 2) {
         left = Math.round(rect.width);
       }
-    }
+    });
     if (!left && w >= 976) {
-      var displaceLeft = parseFloat(cs.getPropertyValue('--drupal-displace-offset-left')) ||
-                         parseFloat(cs.getPropertyValue('--gin-toolbar-x-offset')) || 0;
+      // The displace variable and Gin's x offset hold this toolbar's own edge once
+      // it is registered, so then the last width seen beside it is kept.
+      var displaceLeft = bar.hasAttribute('data-offset-left') ? knownLeft :
+        (parseFloat(cs.getPropertyValue('--drupal-displace-offset-left')) ||
+         parseFloat(cs.getPropertyValue('--gin-toolbar-x-offset')) || 0);
       if (displaceLeft > 30 && displaceLeft < w / 2) {
         left = Math.round(displaceLeft);
       }
     }
-
+    knownLeft = w >= 976 ? left : 0;
     // 3. Posicionamiento del toolbar.
-    bar.style.top   = top + 'px';
-    bar.style.left  = left + 'px';
-    bar.style.width = left ? 'calc(100% - ' + left + 'px)' : '100%';
+    var sidebarWidth = 0;
+    // Read before any write.
+    var barHeight = bar.offsetHeight || 56;
+    if (sidebar) {
+      sidebarWidth = isCollapsed() ? RAIL_WIDTH :
+        (parseFloat(getComputedStyle(bar).getPropertyValue('--subadmin-toolbar-sidebar-width')) || 260);
+    }
+    setStyle(bar, 'top', top + 'px');
+    if (sidebar) {
+      // The sidebar sits beside the other bars and runs to the bottom of the viewport.
+      setStyle(bar, 'left', position === 'left' ? left + 'px' : 'auto');
+      setStyle(bar, 'right', position === 'right' ? '0px' : 'auto');
+      setStyle(bar, 'width', '');
+    } else {
+      setStyle(bar, 'left', left + 'px');
+      setStyle(bar, 'right', '');
+      setStyle(bar, 'width', left ? 'calc(100% - ' + left + 'px)' : '100%');
+    }
 
-    var totalTop = top + (bar.offsetHeight || 56);
-    var docStyle = document.documentElement.style;
-    docStyle.setProperty('--subadmin-toolbar-offset', totalTop + 'px');
-    docStyle.setProperty('--subadmin-toolbar-left',   left + 'px');
+    var sidebarLeft = position === 'left' ? sidebarWidth : 0;
+    // Gin's navigation layout shifts its page by the displace offset, which already holds this sidebar.
+    var displaced = sidebar && position === 'left' && left > 0 && w >= 976 && mode === 'gin-nav';
+    var padLeft = displaced ? 0 : sidebarLeft;
+    var padRight = position === 'right' ? sidebarWidth : 0;
+    // In a sidebar layout the toolbar takes no space at the top.
+    var totalTop = sidebar ? top : top + barHeight;
+    setVar('--subadmin-toolbar-offset', totalTop + 'px');
+    setVar('--subadmin-toolbar-left', (left + sidebarLeft) + 'px');
+    setVar('--subadmin-toolbar-right', padRight + 'px');
+    // Space the sidebar itself takes, on top of what other bars already take.
+    setVar('--subadmin-toolbar-pad-left', padLeft + 'px');
+    setVar('--subadmin-toolbar-pad-right', padRight + 'px');
+    setVar('--subadmin-toolbar-content-top', sidebar ? '0px' : null);
+
+    // Register the occupied edge with Drupal's displace API.
+    publishDisplace(sidebar ? position : 'top', sidebar ? (position === 'left' ? left + sidebarLeft : padRight) : totalTop);
 
     if (mode.startsWith('gin')) {
-      docStyle.setProperty('--gin-sticky-offset', totalTop + 'px');
+      setVar('--gin-sticky-offset', totalTop + 'px');
     }
 
     var secToolbar = document.querySelector('.gin-secondary-toolbar');
     if (secToolbar) {
       var secVisible = secToolbar.offsetHeight > 0 && getComputedStyle(secToolbar).display !== 'none';
       document.body.classList.toggle('gin--secondary-toolbar-hidden', !secVisible);
-    } else if (mode.startsWith('gin')) {
+    } else if (mode.startsWith('gin') && !document.body.classList.contains('gin--secondary-toolbar-hidden')) {
       document.body.classList.add('gin--secondary-toolbar-hidden');
     }
 
     // Modo compacto (hamburguesa) en móvil (<= 768px).
-    var isMobile = w <= 768;
     bar.classList.toggle('is-narrow', isMobile);
-    bar.setAttribute('data-layout-mode', mode);
-    layoutOverflow(isMobile);
+    var layout = layoutName(isMobile, sidebar);
+    if (layout !== lastLayout) {
+      if (lastLayout !== null) resetMenuState();
+      lastLayout = layout;
+    }
+    syncCollapseToggle();
+    if (layout === 'rail') publishFlyoutEdge();
+    setAttr(bar, 'data-layout-mode', mode);
+    // The sidebar scrolls vertically and has no "More" overflow.
+    layoutOverflow(isMobile || sidebar);
 
     if (!isMobile) {
       var col = document.getElementById('subadmin-toolbar-collapse');
       if (col && col.classList.contains('is-active')) {
         col.classList.remove('is-active');
         var btn = bar.querySelector('.subadmin-toolbar-toggle');
-        if (btn) btn.setAttribute('aria-expanded', 'false');
+        if (btn) setAttr(btn, 'aria-expanded', 'false');
       }
     }
   }
@@ -115,6 +282,13 @@
 
   function menu() {
     return document.getElementById(MENU_ID);
+  }
+
+  /** Whether submenus open as an accordion: the hamburger layout or an expanded sidebar. */
+  function isAccordion() {
+    if (!bar) return false;
+    if (bar.classList.contains('is-narrow')) return true;
+    return (bar.getAttribute('data-position') || 'top') !== 'top' && window.innerWidth > 768 && !isCollapsed();
   }
 
   function triggerOf(li) {
@@ -137,7 +311,22 @@
     var trigger = disclosureOf(li);
     if (!trigger || !li.classList.contains('has-submenu')) return;
     var open = li.classList.contains('is-open') || li.classList.contains('is-expanded');
-    trigger.setAttribute('aria-expanded', String(open));
+    setAttr(trigger, 'aria-expanded', String(open));
+    mirrorAria(li, trigger, open);
+  }
+
+  /** In the rail the split button is hidden, so the visible link of a linked parent carries the disclosure state. */
+  function mirrorAria(li, trigger, open) {
+    var link = triggerOf(li);
+    if (!link || link === trigger) return;
+    if (isRail()) {
+      setAttr(link, 'aria-haspopup', 'true');
+      setAttr(link, 'aria-expanded', String(open));
+    }
+    else {
+      dropAttr(link, 'aria-haspopup');
+      dropAttr(link, 'aria-expanded');
+    }
   }
 
   function initAria(root) {
@@ -154,7 +343,7 @@
    * Opens or closes the submenu of an item (hover keeps working on its own).
    */
   function setOpen(li, open) {
-    var cls = bar && bar.classList.contains('is-narrow') ? 'is-expanded' : 'is-open';
+    var cls = isAccordion() ? 'is-expanded' : 'is-open';
     li.classList.toggle(cls, open);
     if (open) li.classList.remove('is-dismissed');
     syncAria(li);
@@ -165,11 +354,20 @@
    */
   function closeAll(keep) {
     if (!bar) return;
-    bar.querySelectorAll('.is-open, .is-expanded').forEach(function (li) {
+    bar.querySelectorAll('.subadmin-toolbar-menu .is-open, .subadmin-toolbar-menu .is-expanded').forEach(function (li) {
       if (!keep || !li.contains(keep)) {
         li.classList.remove('is-open', 'is-expanded');
         syncAria(li);
       }
+    });
+  }
+
+  /** Drops every open, expanded and dismissed state (used when the layout changes). */
+  function resetMenuState() {
+    if (!bar) return;
+    bar.querySelectorAll('.subadmin-toolbar-menu :is(.is-open, .is-expanded, .is-dismissed)').forEach(function (li) {
+      li.classList.remove('is-open', 'is-expanded', 'is-dismissed');
+      syncAria(li);
     });
   }
 
@@ -182,6 +380,106 @@
     keepClosed = !!closed;
     trigger.focus();
     keepClosed = false;
+  }
+
+  /** Direct children of the submenu of an item. */
+  function subItems(li) {
+    var ul = li.querySelector(':scope > .subadmin-toolbar-submenu');
+    return ul ? childItems(ul) : [];
+  }
+
+  /** The items shown in the column of an accordion, in reading order. */
+  function visibleColumn(list, out) {
+    childItems(list).forEach(function (li) {
+      out.push(li);
+      var ul = li.querySelector(':scope > .subadmin-toolbar-submenu');
+      if (ul && li.classList.contains('is-expanded')) visibleColumn(ul, out);
+    });
+    return out;
+  }
+
+  /**
+   * Arrow keys in a vertical list (accordion): Down and Up walk the visible
+   * items, Right opens or enters a parent, Left closes it or goes to the
+   * parent. Returns whether the key was handled.
+   */
+  function accordionKey(key, li, root) {
+    var column = visibleColumn(root, []);
+    var at = column.indexOf(li);
+    var list = li.parentElement;
+    var parentLi = list === root ? null : list.closest('li');
+    var hasSub = li.classList.contains('has-submenu');
+    var siblings = childItems(list);
+
+    if (key === 'ArrowDown') {
+      focusItem(column[Math.min(at + 1, column.length - 1)]);
+    }
+    else if (key === 'ArrowUp') {
+      focusItem(column[Math.max(at - 1, 0)]);
+    }
+    else if (key === 'ArrowRight') {
+      if (!hasSub) return false;
+      if (!li.classList.contains('is-expanded')) {
+        closeAll(li);
+        setOpen(li, true);
+      }
+      else {
+        focusItem(subItems(li)[0]);
+      }
+    }
+    else if (key === 'ArrowLeft') {
+      if (hasSub && li.classList.contains('is-expanded')) setOpen(li, false);
+      else if (parentLi) focusItem(parentLi);
+      else return false;
+    }
+    else if (key === 'Home' || key === 'End') {
+      focusItem(siblings[key === 'Home' ? 0 : siblings.length - 1]);
+    }
+    else {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Arrow keys in the collapsed rail. The top-level items form a column; the
+   * flyout opens toward the page, so the key toward the page enters it and
+   * the opposite key returns to the parent.
+   */
+  function railKey(key, li, root) {
+    var list = li.parentElement;
+    var isTop = list === root;
+    var siblings = childItems(list);
+    var index = siblings.indexOf(li);
+    var parentLi = isTop ? null : list.closest('li');
+    var hasSub = li.classList.contains('has-submenu');
+    var enter = bar.getAttribute('data-position') === 'right' ? 'ArrowLeft' : 'ArrowRight';
+    var leave = enter === 'ArrowRight' ? 'ArrowLeft' : 'ArrowRight';
+
+    if (key === 'ArrowDown') {
+      focusItem(siblings[isTop ? Math.min(index + 1, siblings.length - 1) : (index + 1) % siblings.length]);
+    }
+    else if (key === 'ArrowUp') {
+      focusItem(siblings[isTop ? Math.max(index - 1, 0) : (index + siblings.length - 1) % siblings.length]);
+    }
+    else if (key === enter) {
+      if (!hasSub) return false;
+      setOpen(li, true);
+      positionFlyout(li);
+      focusItem(subItems(li)[0]);
+    }
+    else if (key === leave) {
+      if (!parentLi) return false;
+      setOpen(parentLi, false);
+      focusItem(parentLi, true);
+    }
+    else if (key === 'Home' || key === 'End') {
+      focusItem(siblings[key === 'Home' ? 0 : siblings.length - 1]);
+    }
+    else {
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -206,9 +504,18 @@
     var parentLi = isTop ? null : list.closest('li');
     var handled = true;
 
+    // Vertical layouts (sidebar accordion, narrow list, rail) have their own arrow keys.
+    var vertical = isAccordion();
+    if (key !== 'Escape' && (vertical || isRail())) {
+      // The rail sits at a physical edge, so its flyouts follow the physical arrow keys.
+      var handledKey = vertical ? accordionKey(key, li, root) : railKey(e.key, li, root);
+      if (handledKey) e.preventDefault();
+      return;
+    }
+
     if (key === 'Escape') {
       var hovered = bar.querySelectorAll('.has-submenu:hover');
-      var anyOpen = bar.querySelector('.is-open, .is-expanded') || hovered.length;
+      var anyOpen = bar.querySelector('.subadmin-toolbar-menu .is-open, .subadmin-toolbar-menu .is-expanded') || hovered.length;
       if (!anyOpen) return;
       hovered.forEach(function (item) { item.classList.add('is-dismissed'); });
       var top = li;
@@ -350,6 +657,22 @@
         });
       });
 
+      // Collapse button of a collapsible sidebar: the choice is kept in this browser.
+      once('sat-collapse-toggle', '.subadmin-toolbar-collapse-toggle', context).forEach(function (el) {
+        bar = bar || el.closest('#subadmin-toolbar');
+        syncCollapseToggle();
+        el.addEventListener('click', function () {
+          var next = isCollapsed() ? 'expanded' : 'collapsed';
+          document.documentElement.setAttribute('data-subadmin-sidebar', next);
+          try {
+            window.localStorage.setItem(STORAGE_KEY, next);
+          }
+          catch (e) {}
+          syncCollapseToggle();
+          adjust();
+        });
+      });
+
       // Cerrar collapse al hacer click fuera en móvil
       once('sat-outside-click', document, context).forEach(function (doc) {
         doc.addEventListener('click', function (e) {
@@ -369,7 +692,7 @@
       // Rueda del ratón para scroll horizontal en escritorio cuando hay overflow.
       once('sat-wheel', '#subadmin-toolbar-menu', context).forEach(function (menu) {
         menu.addEventListener('wheel', function (e) {
-          if (bar && !bar.classList.contains('is-narrow') && menu.scrollWidth > menu.clientWidth) {
+          if (bar && bar.getAttribute('data-position') === 'top' && !bar.classList.contains('is-narrow') && menu.scrollWidth > menu.clientWidth) {
             if (e.deltaY !== 0 && e.deltaX === 0) {
               e.preventDefault();
               menu.scrollLeft += e.deltaY;
@@ -383,9 +706,17 @@
         el.addEventListener('click', function (e) {
           // The split button has its own handler.
           if (!bar || this.closest('.subadmin-toolbar-split')) return;
-          if (!bar.classList.contains('is-narrow') && window.innerWidth > 768) {
+          if (!isAccordion()) {
             // Desktop: a wrapper parent ("#") only shows its submenu; don't jump to the top.
             if (this.closest('a[href="#"]')) e.preventDefault();
+            // In the rail a wrapper click (touch) toggles its flyout.
+            var wrapper = this.closest('.has-submenu');
+            if (isRail() && wrapper && wrapper.parentElement === menu() && this.closest('a[href="#"]')) {
+              var open = !wrapper.classList.contains('is-open');
+              if (open) closeAll(wrapper);
+              positionFlyout(wrapper);
+              setOpen(wrapper, open);
+            }
             return;
           }
           e.preventDefault();
@@ -421,20 +752,49 @@
         barEl.addEventListener('focusin', function (e) {
           var inMenu = e.target.closest('.subadmin-toolbar-menu');
           if (!inMenu || keepClosed || !e.target.matches(':focus-visible')) return;
-          // Keyboard focus opens the submenus that lead to the focused item.
-          for (var li = e.target.closest('li'); li && inMenu.contains(li); li = li.parentElement.closest('li')) {
+          // Keyboard focus opens the submenus that lead to the focused item. In
+          // an accordion the focused parent itself stays as it is, so the
+          // arrow keys can walk past it.
+          var own = e.target.closest('li');
+          var start = isAccordion() ? own.parentElement.closest('li') : own;
+          for (var li = start; li && inMenu.contains(li); li = li.parentElement.closest('li')) {
             if (li.classList.contains('has-submenu')) setOpen(li, true);
           }
+          var topLi = own;
+          while (topLi && topLi.parentElement !== inMenu) topLi = topLi.parentElement.closest('li');
+          positionFlyout(topLi);
+        });
+        // The flyouts of the rail line up with the row under the pointer.
+        var hovered = null;
+        barEl.addEventListener('mouseover', function (e) {
+          var li = e.target.closest && e.target.closest('.subadmin-toolbar-item');
+          if (li && li !== hovered) positionFlyout(li);
+          hovered = li;
         });
         barEl.addEventListener('focusout', function (e) {
           var next = e.relatedTarget;
           // In compact mode closing on focus loss collapses the open list on
           // mousedown, shifting the layout so the click lands on another item
           // and is lost. The click handler already closes the others.
-          if (bar.classList.contains('is-narrow') && next && barEl.contains(next)) return;
+          if (isAccordion() && next && barEl.contains(next)) return;
+          // An expanded sidebar keeps its sections when focus leaves the bar (a click on the page).
+          if (isAccordion() && !barEl.classList.contains('is-narrow')) return;
           closeAll(next && next.closest && next.closest('.subadmin-toolbar-menu') ? next : null);
         });
         barEl.addEventListener('click', function (e) {
+          // Touch has no hover: in the rail the first tap on a linked parent
+          // opens its flyout and a second tap follows the link.
+          var parentLink = e.target.closest('.subadmin-toolbar-item.is-linked > a');
+          if (parentLink && e.pointerType === 'touch' && isRail()) {
+            var parentLi = parentLink.parentElement;
+            if (!parentLi.classList.contains('is-open')) {
+              e.preventDefault();
+              closeAll(parentLi);
+              positionFlyout(parentLi);
+              setOpen(parentLi, true);
+              return;
+            }
+          }
           var more = e.target.closest('.subadmin-toolbar-more > button');
           if (more) {
             var item = more.closest('li');
@@ -455,15 +815,10 @@
       // Global listeners and the initial layout run once per page, not on
       // every AJAX attach.
       once('sat-global', 'html').forEach(function () {
-        ['resize', 'drupalToolbarTabChange', 'drupalToolbarTrayChange', 'drupalViewportOffsetChange']
+        ['resize', 'drupalToolbarTabChange', 'drupalToolbarTrayChange']
           .forEach(function (name) { window.addEventListener(name, adjust); });
-        // Other toolbars animate their own width; ours must not re-layout on
-        // its own hover transitions (that made the caret and submenus flicker).
-        window.addEventListener('transitionend', function (e) {
-          if (!(e.target.closest && e.target.closest('#subadmin-toolbar'))) adjust();
-        });
-
-        adjust();
+        // The first layout runs at once so the body padding is final before first paint.
+        _adjust();
         // Deferred pass for Gin/sidebars that render asynchronously.
         setTimeout(adjust, 300);
       });

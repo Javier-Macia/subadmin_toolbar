@@ -159,6 +159,18 @@ subadmin_toolbar.general:
         indicator:
           type: string
           label: 'Parent indicator style'
+        position:
+          type: string
+          label: 'Toolbar position'
+        sidebar_mode:
+          type: string
+          label: 'Sidebar mode'
+        sidebar_width:
+          type: integer
+          label: 'Sidebar width in pixels'
+        sidebar_start_collapsed:
+          type: boolean
+          label: 'Start the sidebar collapsed'
 
 subadmin_toolbar.colors:
   type: mapping
