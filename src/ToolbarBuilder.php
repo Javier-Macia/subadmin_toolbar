@@ -86,6 +86,7 @@ class ToolbarBuilder {
 
     $title = $general->get('toolbar_title');
     $accent_color = (string) $general->get('accent_color');
+    $appearance = Appearance::normalize($general->get('appearance'));
 
     $build += [
       '#theme' => 'subadmin_toolbar',
@@ -96,6 +97,11 @@ class ToolbarBuilder {
       '#accent_color' => preg_match('/^#[0-9a-f]{6}$/i', $accent_color) ? $accent_color : self::DEFAULT_ACCENT_COLOR,
       '#toolbar_title_link' => UrlHelper::stripDangerousProtocols((string) $general->get('toolbar_title_link')),
       '#hide_icon' => (bool) $general->get('hide_icon'),
+      '#style_vars' => Appearance::styleVars($appearance),
+      '#appearance' => [
+        'indicator' => $appearance['indicator'],
+        'submenu_icons' => $appearance['show_submenu_icons'],
+      ],
       '#attached' => [
         'library' => array_filter([
           'subadmin_toolbar/toolbar',

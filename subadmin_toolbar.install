@@ -1,0 +1,30 @@
+<?php
+
+/**
+ * @file
+ * Install and update hooks for the Subadmin Toolbar module.
+ */
+
+declare(strict_types=1);
+
+use Drupal\subadmin_toolbar\Appearance;
+
+/**
+ * Adds the default appearance settings to the general configuration.
+ */
+function subadmin_toolbar_update_10001(): void {
+  $config = \Drupal::configFactory()->getEditable('subadmin_toolbar.general');
+  if ($config->get('appearance') === NULL) {
+    $config->set('appearance', Appearance::defaults())->save();
+  }
+}
+
+/**
+ * Adds the new appearance options without changing the stored ones.
+ */
+function subadmin_toolbar_update_10002(): void {
+  $config = \Drupal::configFactory()->getEditable('subadmin_toolbar.general');
+  $appearance = $config->get('appearance');
+  $appearance = is_array($appearance) ? $appearance : [];
+  $config->set('appearance', $appearance + Appearance::defaults())->save();
+}
