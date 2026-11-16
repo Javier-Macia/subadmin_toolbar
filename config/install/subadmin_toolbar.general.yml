@@ -4,3 +4,33 @@ toolbar_icon: null
 toolbar_title_link: ''
 hide_icon: false
 enable_font_awesome: false
+appearance:
+  height: 56
+  item_padding: 16
+  submenu_min_width: 220
+  font_family: default
+  font_size: 14
+  font_weight: 500
+  letter_spacing: '0'
+  icon_size: 24
+  icon_opacity: '0.7'
+  radius: default
+  shadow: soft
+  border_bottom: none
+  colors:
+    light:
+      bg: ''
+      text: ''
+      hover_bg: ''
+      submenu_bg: ''
+      border: ''
+    dark:
+      bg: ''
+      text: ''
+      hover_bg: ''
+      submenu_bg: ''
+      border: ''
+  open_delay: 0
+  close_delay: 0
+  show_submenu_icons: true
+  indicator: caret

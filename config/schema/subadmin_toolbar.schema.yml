@@ -97,3 +97,85 @@ subadmin_toolbar.general:
     enable_font_awesome:
       type: boolean
       label: 'Enable Font Awesome'
+    appearance:
+      type: mapping
+      label: 'Appearance'
+      mapping:
+        height:
+          type: integer
+          label: 'Toolbar height in pixels'
+        item_padding:
+          type: integer
+          label: 'Horizontal padding of top-level items in pixels'
+        submenu_min_width:
+          type: integer
+          label: 'Minimum submenu width in pixels'
+        font_family:
+          type: string
+          label: 'Font family'
+        font_size:
+          type: integer
+          label: 'Font size in pixels'
+        font_weight:
+          type: integer
+          label: 'Font weight'
+        letter_spacing:
+          type: string
+          label: 'Letter spacing'
+        icon_size:
+          type: integer
+          label: 'Icon size in pixels'
+        icon_opacity:
+          type: string
+          label: 'Icon opacity'
+        radius:
+          type: string
+          label: 'Corner radius of submenus and split buttons'
+        shadow:
+          type: string
+          label: 'Shadow'
+        border_bottom:
+          type: string
+          label: 'Line below the toolbar'
+        colors:
+          type: mapping
+          label: 'Colors'
+          mapping:
+            light:
+              type: subadmin_toolbar.colors
+              label: 'Light colors'
+            dark:
+              type: subadmin_toolbar.colors
+              label: 'Dark colors'
+        open_delay:
+          type: integer
+          label: 'Submenu open delay in milliseconds'
+        close_delay:
+          type: integer
+          label: 'Submenu close delay in milliseconds'
+        show_submenu_icons:
+          type: boolean
+          label: 'Show icons inside submenus'
+        indicator:
+          type: string
+          label: 'Parent indicator style'
+
+subadmin_toolbar.colors:
+  type: mapping
+  label: 'Toolbar colors (empty to inherit the stylesheet default)'
+  mapping:
+    bg:
+      type: string
+      label: 'Background'
+    text:
+      type: string
+      label: 'Text'
+    hover_bg:
+      type: string
+      label: 'Hover background'
+    submenu_bg:
+      type: string
+      label: 'Submenu background'
+    border:
+      type: string
+      label: 'Border'

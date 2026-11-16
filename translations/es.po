@@ -340,3 +340,235 @@ msgstr "El color de acento tiene poco contraste con la barra blanca, por lo que 
 
 msgid "Toggle submenu of @title"
 msgstr "Mostrar u ocultar el submenú de @title"
+
+msgid "Reset appearance to defaults"
+msgstr "Restablecer la apariencia"
+
+msgid "Appearance"
+msgstr "Apariencia"
+
+msgid "Fine-tune how the toolbar looks and behaves. Every option has a default that matches the stylesheet."
+msgstr "Ajusta el aspecto y el comportamiento de la barra. Cada opción tiene un valor por defecto que coincide con la hoja de estilos."
+
+msgid "Link"
+msgstr "Enlace"
+
+msgid "Submenu item"
+msgstr "Elemento de submenú"
+
+msgid "Height"
+msgstr "Altura"
+
+msgid "Compact (48 px)"
+msgstr "Compacta (48 px)"
+
+msgid "Normal (56 px)"
+msgstr "Normal (56 px)"
+
+msgid "Roomy (64 px)"
+msgstr "Amplia (64 px)"
+
+msgid "Font size"
+msgstr "Tamaño de letra"
+
+msgid "Font weight"
+msgstr "Grosor de letra"
+
+msgid "Regular (400)"
+msgstr "Normal (400)"
+
+msgid "Medium (500)"
+msgstr "Medio (500)"
+
+msgid "Semibold (600)"
+msgstr "Seminegrita (600)"
+
+msgid "Icon size"
+msgstr "Tamaño de los iconos"
+
+msgid "Icon opacity"
+msgstr "Opacidad de los iconos"
+
+msgid "Corner radius of submenus and split buttons"
+msgstr "Radio de las esquinas de los submenús y botones divididos"
+
+msgid "Default"
+msgstr "Por defecto"
+
+msgid "Square (0 px)"
+msgstr "Cuadrado (0 px)"
+
+msgid "Soft (6 px)"
+msgstr "Suave (6 px)"
+
+msgid "Round (12 px)"
+msgstr "Redondo (12 px)"
+
+msgid "Shadow"
+msgstr "Sombra"
+
+msgid "None"
+msgstr "Ninguna"
+
+msgid "Soft"
+msgstr "Suave"
+
+msgid "Strong"
+msgstr "Fuerte"
+
+msgid "Background"
+msgstr "Fondo"
+
+msgid "Text"
+msgstr "Texto"
+
+msgid "Hover background"
+msgstr "Fondo al pasar el ratón"
+
+msgid "Submenu background"
+msgstr "Fondo del submenú"
+
+msgid "Border"
+msgstr "Borde"
+
+msgid "Colors"
+msgstr "Colores"
+
+msgid "Leave a color on \"Inherit\" to keep the toolbar default. The dark colors apply when the site uses its dark mode."
+msgstr "Deja un color en «Heredar» para mantener el valor por defecto de la barra. Los colores oscuros se aplican cuando el sitio usa su modo oscuro."
+
+msgid "Light mode colors"
+msgstr "Colores del modo claro"
+
+msgid "Dark mode colors"
+msgstr "Colores del modo oscuro"
+
+msgid "Inherit"
+msgstr "Heredar"
+
+msgid "Hover behavior"
+msgstr "Comportamiento al pasar el ratón"
+
+msgid "Applies to submenus on desktop screens."
+msgstr "Se aplica a los submenús en pantallas de escritorio."
+
+msgid "Open delay"
+msgstr "Retraso al abrir"
+
+msgid "Close delay"
+msgstr "Retraso al cerrar"
+
+msgid "Show icons inside submenus"
+msgstr "Mostrar iconos dentro de los submenús"
+
+msgid "Parent indicator"
+msgstr "Indicador de elementos con submenú"
+
+msgid "Indicator style for items with a submenu"
+msgstr "Estilo del indicador de los elementos con submenú"
+
+msgid "Caret"
+msgstr "Flecha"
+
+msgid "Plus and minus"
+msgstr "Más y menos"
+
+msgid "None (split buttons show a text label)"
+msgstr "Ninguno (los botones divididos muestran una etiqueta de texto)"
+
+msgid "The appearance has been reset to its defaults."
+msgstr "La apariencia se ha restablecido a sus valores por defecto."
+
+msgid "Submenu"
+msgstr "Submenú"
+
+msgctxt "Color scheme"
+msgid "Light"
+msgstr "Claro"
+
+msgctxt "Color scheme"
+msgid "Dark"
+msgstr "Oscuro"
+
+msgctxt "Color scheme"
+msgid "light"
+msgstr "claro"
+
+msgctxt "Color scheme"
+msgid "dark"
+msgstr "oscuro"
+
+msgid "Dimensions"
+msgstr "Dimensiones"
+
+msgid "Typography"
+msgstr "Tipografía"
+
+msgid "Shape and depth"
+msgstr "Forma y profundidad"
+
+msgid "Horizontal padding of top-level items"
+msgstr "Relleno horizontal de los elementos de primer nivel"
+
+msgid "Minimum width of submenus"
+msgstr "Ancho mínimo de los submenús"
+
+msgid "Only fonts already installed on the visitor's device are used; no font file is downloaded."
+msgstr "Solo se usan tipos de letra ya instalados en el dispositivo del visitante; no se descarga ningún archivo de fuente."
+
+msgid "Font family"
+msgstr "Familia tipográfica"
+
+msgid "System sans-serif"
+msgstr "Sans-serif del sistema"
+
+msgid "Humanist sans-serif"
+msgstr "Sans-serif humanista"
+
+msgid "Serif"
+msgstr "Serif"
+
+msgid "Monospace"
+msgstr "Monoespaciada"
+
+msgid "Light (300)"
+msgstr "Ligera (300)"
+
+msgid "Bold (700)"
+msgstr "Negrita (700)"
+
+msgid "Letter spacing"
+msgstr "Espaciado entre letras"
+
+msgid "Tight"
+msgstr "Ajustado"
+
+msgid "Slightly wide"
+msgstr "Algo amplio"
+
+msgid "Wide"
+msgstr "Amplio"
+
+msgid "Very wide"
+msgstr "Muy amplio"
+
+msgid "Medium"
+msgstr "Media"
+
+msgid "Line below the toolbar"
+msgstr "Línea bajo la barra"
+
+msgid "Thin line"
+msgstr "Línea fina"
+
+msgid "With \"None\", items that only open a submenu and have no link of their own show no cue at all that they contain a submenu."
+msgstr "Con «Ninguno», los elementos que solo abren un submenú y no tienen enlace propio no muestran ninguna señal de que contienen un submenú."
+
+msgid "In @mode mode, the text color has a contrast ratio of @ratio:1 against the @pair, below the recommended 4.5:1."
+msgstr "En modo @mode, el color del texto tiene una relación de contraste de @ratio:1 frente a «@pair», inferior a la recomendada de 4,5:1."
+
+msgid "In @mode mode, the text color has a contrast ratio of @ratio:1 against the @pair, below the recommended 4.5:1, so the text may be hard to read."
+msgstr "En modo @mode, el color del texto tiene una relación de contraste de @ratio:1 frente a «@pair», inferior a la recomendada de 4,5:1, por lo que el texto puede ser difícil de leer."
+
+msgid "Reset every appearance option to its default? Unsaved changes in this section are lost."
+msgstr "¿Restablecer todas las opciones de apariencia a sus valores por defecto? Se perderán los cambios sin guardar de esta sección."
