@@ -54,6 +54,38 @@ Finally, grant the **Access the Subadmin Toolbar** permission to the roles that 
 
 Link URLs must start with `/` (internal path) or be a valid external URL; unsafe protocols such as `javascript:` are rejected.
 
+## Layout: top bar or sidebar
+
+The **Layout** group of the general settings controls where the toolbar sits.
+
+- **Position:** `top` (default, horizontal bar), `left` or `right` (vertical sidebar). The top position is unchanged by the sidebar options below.
+- **Sidebar mode** (left/right only): `fixed` keeps the sidebar always expanded; `collapsible` adds a toggle button, pinned at the bottom of the sidebar, that shrinks it to a 64 px icon rail. The choice is remembered per browser in `localStorage` (`subadminToolbar.sidebar`); if storage is unavailable the toggle still works for the current page.
+- **Sidebar width:** width in pixels of the expanded sidebar, published as `--subadmin-toolbar-sidebar-width`.
+- **Start the sidebar collapsed:** the state used when the visitor has no stored choice (collapsible mode only).
+- **Narrow screens (768 px and below):** every position falls back to the top bar with the hamburger button; no sidebar, no collapse button, no body padding.
+- **Submenus:** in an expanded sidebar submenus open as an accordion inside the column. In the rail, top-level items show only their icon (or the initial letter of the title); submenus open as flyouts next to the rail on hover or focus, and a touch tap on a linked parent opens the flyout first and follows the link on the second tap. Widgets stack as a centered column of icon-only controls above the toggle (text labels stay readable by assistive tech) and their dropdown panels open toward the page. A widget that cannot shrink to an icon (arbitrary block markup, forms, long text) can opt out of the rail by carrying the class `subadmin-widget-no-rail`.
+
+### Gin and core toolbar
+
+The sidebar stacks around the administration theme's own bars instead of covering them. With Gin the left sidebar starts after Gin's vertical navigation and below any Gin top bar (the toolbar is offset by the other top bars); the right sidebar sits at the right edge. The body receives padding equal to the sidebar's own width so page content never sits under it.
+
+### Displace API
+
+The toolbar registers with Drupal's displace API: `#subadmin-toolbar` carries `data-offset-top` (top bar and the narrow hamburger bar), `data-offset-left` or `data-offset-right` (sidebar), set from script together with the layout, so `--drupal-displace-offset-*` and anything that reads it (off-canvas dialogs, modals, sticky headers, Gin) move out of its way. The off-canvas dialog opens beside a right sidebar. In Gin's navigation layout the left sidebar's width reaches the page through the displace offset instead of body padding.
+
+### Keyboard in the sidebar
+
+- Expanded sidebar (and the hamburger list on narrow screens): Down/Up move through the visible items, Right expands a submenu or enters it, Left collapses it or goes to the parent, Home/End jump to the first/last sibling, Escape closes.
+- Collapsed rail: Down/Up move through the top-level items; the arrow pointing toward the page (Right on the left sidebar, Left on the right sidebar) enters the flyout, the opposite arrow or Escape returns to the parent item.
+- The collapse button is a normal button (Enter or Space) with `aria-expanded`.
+- The top bar keeps its horizontal arrow-key model.
+
+### Hooks for themes
+
+Attributes on `#subadmin-toolbar`: `data-position` (`top`, `left`, `right`), `data-sidebar-mode` (`fixed`, `collapsible`), `data-sidebar-collapsed` (configured start state), `data-layout-mode`. On `<html>`: `data-subadmin-sidebar` (`collapsed` or `expanded`, set early from storage in collapsible mode). The class `is-narrow` marks the hamburger layout.
+
+CSS custom properties on `:root` maintained by the module (pixels): `--subadmin-toolbar-offset` (space taken above the content by the toolbar and other top bars), `--subadmin-toolbar-left` and `--subadmin-toolbar-right` (space taken at each side, including other left bars), `--subadmin-toolbar-pad-left` and `--subadmin-toolbar-pad-right` (only the sidebar's own current width, used for body padding), `--subadmin-toolbar-content-top` (`0px` in sidebar mode). On the toolbar: `--subadmin-toolbar-sidebar-width` and `--subadmin-toolbar-height`. A theme that applies `transform`, `filter` or `backdrop-filter` to `#subadmin-toolbar` changes the containing block of the rail flyouts, which are `position: fixed`. A theme that adds its own fixed regions can read the pad variables to stay clear of the sidebar.
+
 ## License
 
 - GNU General Public License v2.0 or later (GPL-2.0-or-later).

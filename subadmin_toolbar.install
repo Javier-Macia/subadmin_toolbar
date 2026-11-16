@@ -28,3 +28,13 @@ function subadmin_toolbar_update_10002(): void {
   $appearance = is_array($appearance) ? $appearance : [];
   $config->set('appearance', $appearance + Appearance::defaults())->save();
 }
+
+/**
+ * Adds the layout options without changing the stored appearance values.
+ */
+function subadmin_toolbar_update_10003(): void {
+  $config = \Drupal::configFactory()->getEditable('subadmin_toolbar.general');
+  $appearance = $config->get('appearance');
+  $appearance = is_array($appearance) ? $appearance : [];
+  $config->set('appearance', $appearance + Appearance::defaults())->save();
+}

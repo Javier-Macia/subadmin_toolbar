@@ -14,7 +14,9 @@
  * - style_vars: Validated CSS custom properties (name => value) for the style
  *   attribute.
  * - appearance: Validated appearance flags: indicator (caret, plus_minus or
- *   none) and submenu_icons (whether icons show inside submenus).
+ *   none), submenu_icons (whether icons show inside submenus), position (top,
+ *   left or right), sidebar_mode (fixed or collapsible) and
+ *   sidebar_start_collapsed (whether the sidebar starts collapsed).
  */
 #}
 {% macro render_icon(link) %}
@@ -26,16 +28,18 @@
         <i class="{{ link.icon_type }} {{ link.icon }}" aria-hidden="true"></i>
       </span>
     {% endif %}
+  {% else %}
+    <span class="subadmin-toolbar-initial" aria-hidden="true">{{ link.title|striptags|trim|slice(0, 1)|upper }}</span>
   {% endif %}
 {% endmacro %}
 
-{% macro render_menu_items(items, is_root, indicator) %}
+{% macro render_menu_items(items, is_root, indicator, with_title) %}
   {% import _self as macros %}
   {% for link in items %}
     {# A parent without a URL (stored as "#") is only a wrapper: it opens its submenu and goes nowhere. #}
     {% set is_linked = link.url and link.url != '#' %}
     <li class="{{ is_root ? 'subadmin-toolbar-item' : 'subadmin-toolbar-subitem' }}{{ link.below ? ' has-submenu ' ~ (is_linked ? 'is-linked' : 'is-wrapper') }}">
-      <a href="{{ link.url }}" class="{{ is_root ? 'subadmin-toolbar-link' : 'subadmin-toolbar-sublink' }}">
+      <a href="{{ link.url }}"{% if with_title and is_root %} title="{{ link.title|striptags }}"{% endif %} class="{{ is_root ? 'subadmin-toolbar-link' : 'subadmin-toolbar-sublink' }}">
         {{ macros.render_icon(link) }}
         <span class="subadmin-toolbar-text">{{ link.title }}</span>
         {% if link.below and not is_linked %}
@@ -53,7 +57,7 @@
       {% endif %}
       {% if link.below %}
         <ul class="subadmin-toolbar-submenu">
-          {{ macros.render_menu_items(link.below, false, indicator) }}
+          {{ macros.render_menu_items(link.below, false, indicator, with_title) }}
         </ul>
       {% endif %}
     </li>
@@ -61,8 +65,10 @@
 {% endmacro %}
 {% import _self as macros %}
 
+{% set position = appearance.position|default('top') %}
+{% set has_collapse_toggle = position != 'top' and appearance.sidebar_mode|default('fixed') == 'collapsible' and links %}
 {% if links or widgets %}
-  <div id="subadmin-toolbar" class="subadmin-toolbar gin-like-toolbar" role="navigation" aria-label="{{ 'Subadmin toolbar'|t }}" data-indicator="{{ appearance.indicator|default('caret') }}"{% if appearance.submenu_icons is same as(false) %} data-submenu-icons="hidden"{% endif %} style="--subadmin-toolbar-toggle-hover-color: {{ accent_color }}; --subadmin-toolbar-accent: {{ accent_color }};{% for name, value in style_vars %} {{ name }}: {{ value }};{% endfor %}">
+  <div id="subadmin-toolbar" class="subadmin-toolbar gin-like-toolbar" role="navigation" aria-label="{{ 'Subadmin toolbar'|t }}" data-position="{{ position }}"{% if position != 'top' %} data-sidebar-mode="{{ appearance.sidebar_mode|default('fixed') }}"{% endif %}{% if has_collapse_toggle and appearance.sidebar_start_collapsed %} data-sidebar-collapsed="true"{% endif %} data-indicator="{{ appearance.indicator|default('caret') }}"{% if appearance.submenu_icons is same as(false) %} data-submenu-icons="hidden"{% endif %} style="--subadmin-toolbar-toggle-hover-color: {{ accent_color }}; --subadmin-toolbar-accent: {{ accent_color }};{% for name, value in style_vars %} {{ name }}: {{ value }};{% endfor %}">
     <div class="subadmin-toolbar-inner">
       {% set brand %}
         {% if not hide_icon %}
@@ -90,7 +96,7 @@
       <div id="subadmin-toolbar-collapse" class="subadmin-toolbar-collapse">
         {% if links %}
           <ul id="subadmin-toolbar-menu" class="subadmin-toolbar-menu">
-            {{ macros.render_menu_items(links, true, appearance.indicator|default('caret')) }}
+            {{ macros.render_menu_items(links, true, appearance.indicator|default('caret'), has_collapse_toggle and appearance.sidebar_start_collapsed) }}
           </ul>
         {% endif %}
 
@@ -102,6 +108,12 @@
           </div>
         {% endif %}
       </div>
+
+      {% if has_collapse_toggle %}
+        <button type="button" class="subadmin-toolbar-collapse-toggle" aria-expanded="{{ appearance.sidebar_start_collapsed ? 'false' : 'true' }}" aria-controls="subadmin-toolbar-menu">
+          <span class="subadmin-toolbar-collapse-label" data-label-collapse="{{ 'Collapse menu'|t }}" data-label-expand="{{ 'Expand menu'|t }}">{{ appearance.sidebar_start_collapsed ? 'Expand menu'|t : 'Collapse menu'|t }}</span>
+        </button>
+      {% endif %}
 
       <button type="button" class="subadmin-toolbar-toggle" aria-expanded="false" aria-controls="subadmin-toolbar-collapse" aria-label="{{ 'Toggle menu'|t }}">
         <span class="subadmin-toolbar-toggle-icon" translate="no"></span>

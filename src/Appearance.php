@@ -64,6 +64,9 @@ final class Appearance {
     'open_delay' => [0, 50, 100, 150, 200, 300, 400],
     'close_delay' => [0, 100, 200, 300, 400, 600, 800],
     'indicator' => ['caret', 'plus_minus', 'none'],
+    'position' => ['top', 'left', 'right'],
+    'sidebar_mode' => ['fixed', 'collapsible'],
+    'sidebar_width' => [220, 240, 260, 280, 300, 320, 340, 360],
   ];
 
   /**
@@ -135,6 +138,10 @@ final class Appearance {
       'close_delay' => 0,
       'show_submenu_icons' => TRUE,
       'indicator' => 'caret',
+      'position' => 'top',
+      'sidebar_mode' => 'fixed',
+      'sidebar_width' => 260,
+      'sidebar_start_collapsed' => FALSE,
     ];
   }
 
@@ -164,9 +171,11 @@ final class Appearance {
       }
     }
 
-    $icons = $raw['show_submenu_icons'] ?? NULL;
-    if (is_bool($icons) || in_array($icons, [0, 1, '0', '1'], TRUE)) {
-      $values['show_submenu_icons'] = (bool) $icons;
+    foreach (['show_submenu_icons', 'sidebar_start_collapsed'] as $flag) {
+      $value = $raw[$flag] ?? NULL;
+      if (is_bool($value) || in_array($value, [0, 1, '0', '1'], TRUE)) {
+        $values[$flag] = (bool) $value;
+      }
     }
 
     return $values;
@@ -200,6 +209,9 @@ final class Appearance {
       'open_delay' => ['--subadmin-toolbar-open-delay', 'ms'],
       'close_delay' => ['--subadmin-toolbar-close-delay', 'ms'],
     ];
+    if ($values['position'] !== 'top') {
+      $units['sidebar_width'] = ['--subadmin-toolbar-sidebar-width', 'px'];
+    }
     foreach ($units as $key => [$property, $unit]) {
       if ($values[$key] !== $defaults[$key]) {
         $vars[$property] = $values[$key] . $unit;

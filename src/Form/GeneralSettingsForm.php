@@ -192,6 +192,32 @@ class GeneralSettingsForm extends ToolbarFormBase {
       return $options;
     };
 
+    $group['layout'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Layout'),
+      '#description' => $this->t('The toolbar sits at the top of the page, or becomes a sidebar on the left or right.'),
+      '#open' => TRUE,
+    ];
+    $group['layout']['position'] = $select((string) $this->t('Position'), 'position', [
+      'top' => $this->t('Top'),
+      'left' => $this->t('Left'),
+      'right' => $this->t('Right'),
+    ]);
+    $sidebar_only = [':input[name="appearance[layout][position]"]' => ['!value' => 'top']];
+    $group['layout']['sidebar_mode'] = $select((string) $this->t('Sidebar mode'), 'sidebar_mode', [
+      'fixed' => $this->t('Fixed'),
+      'collapsible' => $this->t('Collapsible'),
+    ]);
+    $group['layout']['sidebar_mode']['#states'] = ['visible' => $sidebar_only];
+    $group['layout']['sidebar_width'] = $select((string) $this->t('Sidebar width'), 'sidebar_width', $pixels('sidebar_width'));
+    $group['layout']['sidebar_width']['#states'] = ['visible' => $sidebar_only];
+    $group['layout']['sidebar_start_collapsed'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Start the sidebar collapsed'),
+      '#default_value' => $values['sidebar_start_collapsed'],
+      '#states' => ['visible' => $sidebar_only + [':input[name="appearance[layout][sidebar_mode]"]' => ['value' => 'collapsible']]],
+    ];
+
     $group['dimensions'] = [
       '#type' => 'details',
       '#title' => $this->t('Dimensions'),
@@ -362,7 +388,7 @@ class GeneralSettingsForm extends ToolbarFormBase {
    */
   protected function getSubmittedAppearance(FormStateInterface $form_state): array {
     $raw = (array) $form_state->getValue('appearance');
-    foreach (['dimensions', 'typography', 'shape', 'hover'] as $section) {
+    foreach (['layout', 'dimensions', 'typography', 'shape', 'hover'] as $section) {
       foreach ((array) ($raw[$section] ?? []) as $key => $value) {
         $raw[$key] = $value;
       }

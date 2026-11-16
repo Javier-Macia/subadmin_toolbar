@@ -140,7 +140,13 @@ class ToolbarBuilderTest extends KernelTestBase {
     $this->assertSame('#112233', $vars['--subadmin-toolbar-light-text']);
     $this->assertSame('#010203', $vars['--subadmin-toolbar-dark-bg']);
     $this->assertSame('#0a0b0c', $vars['--subadmin-toolbar-dark-hover-bg']);
-    $this->assertSame(['indicator' => 'plus_minus', 'submenu_icons' => FALSE], $build['#appearance']);
+    $this->assertSame([
+      'indicator' => 'plus_minus',
+      'submenu_icons' => FALSE,
+      'position' => 'top',
+      'sidebar_mode' => 'fixed',
+      'sidebar_start_collapsed' => FALSE,
+    ], $build['#appearance']);
   }
 
   /**
@@ -175,7 +181,13 @@ class ToolbarBuilderTest extends KernelTestBase {
     $build = $this->container->get('subadmin_toolbar.builder')->build();
 
     $this->assertSame([], $build['#style_vars']);
-    $this->assertSame(['indicator' => 'caret', 'submenu_icons' => TRUE], $build['#appearance']);
+    $this->assertSame([
+      'indicator' => 'caret',
+      'submenu_icons' => TRUE,
+      'position' => 'top',
+      'sidebar_mode' => 'fixed',
+      'sidebar_start_collapsed' => FALSE,
+    ], $build['#appearance']);
   }
 
   /**
@@ -229,6 +241,130 @@ class ToolbarBuilderTest extends KernelTestBase {
       '--subadmin-toolbar-radius' => '6px',
       '--subadmin-toolbar-light-bg' => '#abcdef',
     ], Appearance::styleVars(Appearance::normalize($appearance)));
+  }
+
+  /**
+   * The update hook adds the layout options and keeps the stored values.
+   */
+  public function testUpdate10003KeepsStoredValues(): void {
+    $this->container->get('module_handler')->loadInclude('subadmin_toolbar', 'install');
+    $this->config('subadmin_toolbar.general')->set('appearance', ['height' => 64, 'position' => 'left'])->save();
+
+    subadmin_toolbar_update_10003();
+
+    $appearance = $this->config('subadmin_toolbar.general')->get('appearance');
+    $this->assertSame(64, $appearance['height']);
+    $this->assertSame('left', $appearance['position']);
+    $this->assertSame('fixed', $appearance['sidebar_mode']);
+    $this->assertSame(260, $appearance['sidebar_width']);
+    $this->assertFalse($appearance['sidebar_start_collapsed']);
+  }
+
+  /**
+   * Renders the toolbar of the current user to markup.
+   */
+  protected function renderToolbar(): string {
+    $build = $this->container->get('subadmin_toolbar.builder')->build();
+    return (string) $this->container->get('renderer')->renderInIsolation($build);
+  }
+
+  /**
+   * Position and sidebar attributes and the collapse button are rendered.
+   */
+  public function testPositionDataAttributes(): void {
+    $this->setUpCurrentUser([], ['access subadmin toolbar']);
+    $this->setLinks([
+      ['id' => 'a', 'title' => 'Alpha', 'url' => '/a'],
+      ['id' => 'b', 'title' => 'Beta', 'url' => '/b', 'icon' => 'home'],
+    ]);
+
+    $html = $this->renderToolbar();
+    $this->assertStringContainsString('data-position="top"', $html);
+    $this->assertStringNotContainsString('data-sidebar-mode', $html);
+    $this->assertStringNotContainsString('subadmin-toolbar-collapse-toggle', $html);
+    $this->assertStringNotContainsString('data-sidebar-collapsed', $html);
+    $this->assertStringNotContainsString(' title=', $html);
+    $this->assertSame(1, substr_count($html, 'subadmin-toolbar-initial'));
+    $this->assertStringContainsString('<span class="subadmin-toolbar-initial" aria-hidden="true">A</span>', $html);
+
+    $this->config('subadmin_toolbar.general')->set('appearance', [
+      'position' => 'left',
+      'sidebar_mode' => 'collapsible',
+      'sidebar_start_collapsed' => TRUE,
+    ])->save();
+    $html = $this->renderToolbar();
+    $this->assertStringContainsString('data-position="left"', $html);
+    $this->assertStringContainsString('data-sidebar-mode="collapsible"', $html);
+    $this->assertStringContainsString('data-sidebar-collapsed="true"', $html);
+    $this->assertStringContainsString('class="subadmin-toolbar-collapse-toggle"', $html);
+    $this->assertStringContainsString('aria-controls="subadmin-toolbar-menu"', $html);
+    // The button closes the sidebar: after the menu column, not in the brand.
+    $this->assertGreaterThan(strpos($html, 'id="subadmin-toolbar-collapse"'), strpos($html, 'subadmin-toolbar-collapse-toggle'));
+    $this->assertStringContainsString('class="subadmin-toolbar-collapse-toggle" aria-expanded="false"', $html);
+    $this->assertStringContainsString('data-label-expand="Expand menu">Expand menu</span>', $html);
+    $this->assertStringContainsString('title="Alpha"', $html);
+    $this->assertStringContainsString('title="Beta"', $html);
+
+    $this->config('subadmin_toolbar.general')->set('appearance', [
+      'position' => 'left',
+      'sidebar_mode' => 'collapsible',
+      'sidebar_start_collapsed' => FALSE,
+    ])->save();
+    $html = $this->renderToolbar();
+    $this->assertStringNotContainsString(' title=', $html);
+    $this->assertStringContainsString('class="subadmin-toolbar-collapse-toggle" aria-expanded="true"', $html);
+    $this->assertStringContainsString('data-label-expand="Expand menu">Collapse menu</span>', $html);
+
+    // Without links there is no menu for the button to control.
+    $this->setLinks([]);
+    $this->assertStringNotContainsString('subadmin-toolbar-collapse-toggle', $this->renderToolbar());
+    $this->setLinks([
+      ['id' => 'a', 'title' => 'Alpha', 'url' => '/a'],
+    ]);
+
+    $this->config('subadmin_toolbar.general')->set('appearance', [
+      'position' => 'right',
+      'sidebar_mode' => 'fixed',
+    ])->save();
+    $html = $this->renderToolbar();
+    $this->assertStringContainsString('data-position="right"', $html);
+    $this->assertStringContainsString('data-sidebar-mode="fixed"', $html);
+    $this->assertStringNotContainsString('subadmin-toolbar-collapse-toggle', $html);
+    $this->assertStringNotContainsString('data-sidebar-collapsed', $html);
+  }
+
+  /**
+   * The sidebar width reaches the style variables.
+   */
+  public function testSidebarWidthReachesStyleVars(): void {
+    $this->setUpCurrentUser([], ['access subadmin toolbar']);
+    $this->setLinks([['id' => 'a', 'title' => 'A', 'url' => '/a']]);
+    $this->config('subadmin_toolbar.general')->set('appearance', ['position' => 'left', 'sidebar_width' => 300])->save();
+
+    $build = $this->container->get('subadmin_toolbar.builder')->build();
+    $this->assertSame('300px', $build['#style_vars']['--subadmin-toolbar-sidebar-width']);
+  }
+
+  /**
+   * The early state script is attached only to collapsible sidebars.
+   */
+  public function testSidebarInitLibraryOnlyForCollapsibleSidebars(): void {
+    $this->setUpCurrentUser([], ['access subadmin toolbar']);
+    $this->setLinks([['id' => 'a', 'title' => 'A', 'url' => '/a']]);
+    $cases = [
+      ['top', 'collapsible', FALSE],
+      ['top', 'fixed', FALSE],
+      ['left', 'fixed', FALSE],
+      ['left', 'collapsible', TRUE],
+      ['right', 'collapsible', TRUE],
+    ];
+    foreach ($cases as [$position, $mode, $expected]) {
+      $this->config('subadmin_toolbar.general')->set('appearance', ['position' => $position, 'sidebar_mode' => $mode])->save();
+      $build = $this->container->get('subadmin_toolbar.builder')->build();
+      $libraries = $build['#attached']['library'];
+      $this->assertSame($expected, in_array('subadmin_toolbar/sidebar_init', $libraries, TRUE), "$position $mode");
+      $this->assertContains('subadmin_toolbar/toolbar', $libraries);
+    }
   }
 
 }

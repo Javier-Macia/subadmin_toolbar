@@ -101,11 +101,15 @@ class ToolbarBuilder {
       '#appearance' => [
         'indicator' => $appearance['indicator'],
         'submenu_icons' => $appearance['show_submenu_icons'],
+        'position' => $appearance['position'],
+        'sidebar_mode' => $appearance['sidebar_mode'],
+        'sidebar_start_collapsed' => $appearance['sidebar_start_collapsed'],
       ],
       '#attached' => [
         'library' => array_filter([
           'subadmin_toolbar/toolbar',
           $general->get('enable_font_awesome') ? 'subadmin_toolbar/font_awesome' : NULL,
+          $appearance['position'] !== 'top' && $appearance['sidebar_mode'] === 'collapsible' ? 'subadmin_toolbar/sidebar_init' : NULL,
         ]),
       ],
       '#weight' => -100,

@@ -723,7 +723,7 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
     }
 
     #subadmin-toolbar .subadmin-toolbar-submenu .subadmin-toolbar-submenu .subadmin-toolbar-sublink {
-        padding-left: 64px;
+        padding-inline-start: 64px;
     }
 
     #subadmin-toolbar .subadmin-toolbar-widgets {
@@ -796,25 +796,25 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
 
 /* Gin secondary toolbar se desplaza hacia abajo cuando está visible */
 .gin-secondary-toolbar {
-    margin-top: var(--subadmin-toolbar-height, 56px) !important;
+    margin-top: var(--subadmin-toolbar-content-top, var(--subadmin-toolbar-height, 56px)) !important;
 }
 
 /* Cuando .gin-secondary-toolbar está oculta (display: none) o ausente en el DOM */
 body.gin--secondary-toolbar-hidden .region-sticky-watcher,
 body:not(:has(.gin-secondary-toolbar)) .region-sticky-watcher {
-    margin-top: var(--subadmin-toolbar-height, 56px) !important;
+    margin-top: var(--subadmin-toolbar-content-top, var(--subadmin-toolbar-height, 56px)) !important;
 }
 
 body.gin--secondary-toolbar-hidden:not(:has(.region-sticky-watcher)) .region-sticky,
 body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)) .region-sticky {
-    margin-top: var(--subadmin-toolbar-height, 56px) !important;
+    margin-top: var(--subadmin-toolbar-content-top, var(--subadmin-toolbar-height, 56px)) !important;
 }
 
 body.gin--secondary-toolbar-hidden:not(:has(.region-sticky-watcher)):not(:has(.region-sticky)) #block-gin-content,
 body.gin--secondary-toolbar-hidden:not(:has(.region-sticky-watcher)):not(:has(.region-sticky)) .page-content,
 body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:has(.region-sticky)) #block-gin-content,
 body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:has(.region-sticky)) .page-content {
-    margin-top: var(--subadmin-toolbar-height, 56px) !important;
+    margin-top: var(--subadmin-toolbar-content-top, var(--subadmin-toolbar-height, 56px)) !important;
 }
 
 /* Cabecera de Gin (título de página y acciones sticky): se posiciona debajo de subadmin-toolbar sin solaparse */
@@ -1136,4 +1136,578 @@ body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:ha
 #subadmin-toolbar[data-indicator="none"]:not(.is-narrow) .subadmin-toolbar-subitem.is-linked>.subadmin-toolbar-split,
 #subadmin-toolbar[data-indicator="none"].is-narrow .has-submenu.is-linked>.subadmin-toolbar-split {
     width: auto;
+}
+
+/* The collapse button only shows in a wide sidebar. */
+.subadmin-toolbar-collapse-toggle {
+    display: none;
+}
+
+/* The first-letter fallback only shows where the rail needs it. */
+.subadmin-toolbar-initial {
+  display: none;
+}
+
+/* ==========================================================================
+   Sidebar layout (position left or right), expanded, wide screens only.
+   Narrow screens keep the hamburger menu for every position.
+   ========================================================================== */
+@media (min-width: 769px) {
+    /* Content is pushed away from the sidebar; the top bars are not touched. */
+    body:has(#subadmin-toolbar[data-position="left"]:not(.is-narrow)) {
+        padding-left: var(--subadmin-toolbar-pad-left, 0px) !important;
+    }
+
+    body:has(#subadmin-toolbar[data-position="right"]:not(.is-narrow)) {
+        padding-right: var(--subadmin-toolbar-pad-right, 0px) !important;
+    }
+
+    /* Gin's own right-hand sidebar (node edit forms) sits beside the right toolbar instead of under it. */
+    body:has(#subadmin-toolbar[data-position="right"]:not(.is-narrow)) .layout-region-node-secondary {
+        right: var(--subadmin-toolbar-pad-right, 0px) !important;
+    }
+
+    /* The off-canvas dialog places itself from the window edge; it opens beside the right sidebar. */
+    body:has(#subadmin-toolbar[data-position="right"]:not(.is-narrow)) #drupal-off-canvas-wrapper {
+        left: auto !important;
+        right: var(--subadmin-toolbar-pad-right, 0px) !important;
+    }
+
+    /* Gin pads the edit form for its sidebar from 64em; that space adds to the toolbar's. */
+    @media (min-width: 64em) {
+        body.gin--edit-form:has(#subadmin-toolbar[data-position="right"]:not(.is-narrow)) {
+            padding-right: calc(var(--subadmin-toolbar-pad-right, 0px) + var(--gin-sidebar-offset, 0px)) !important;
+        }
+    }
+
+    /* A fixed navigation without an explicit edge would follow the padding of the body. */
+    body:has(#subadmin-toolbar[data-position="left"]:not(.is-narrow)) aside.admin-toolbar {
+        left: 0;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) {
+        bottom: 0;
+        width: var(--subadmin-toolbar-sidebar-width, 260px);
+        height: auto;
+        display: block;
+        border-bottom: none;
+    }
+
+    #subadmin-toolbar[data-position="left"]:not(.is-narrow) {
+        right: auto;
+        border-right: 1px solid var(--subadmin-toolbar-border);
+    }
+
+    #subadmin-toolbar[data-position="right"]:not(.is-narrow) {
+        left: auto;
+        border-left: 1px solid var(--subadmin-toolbar-border);
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-inner {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0;
+    }
+
+    /* Collapse button: neutral, pinned at the bottom of the sidebar, 44 px target. */
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-collapse-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        gap: 12px;
+        min-width: 44px;
+        height: 44px;
+        align-self: stretch;
+        justify-content: flex-start;
+        margin: 8px 10px;
+        padding: 0 10px;
+        border: none;
+        border-radius: var(--subadmin-toolbar-radius, 8px);
+        background: transparent;
+        color: var(--subadmin-toolbar-text);
+        font: inherit;
+        font-size: var(--subadmin-toolbar-font-size, 14px);
+        font-weight: var(--subadmin-toolbar-font-weight, 500);
+        text-align: start;
+        cursor: pointer;
+    }
+
+    /* Expanded sidebar: the label shows next to the icon. */
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-collapse-toggle .subadmin-toolbar-collapse-label {
+        position: static;
+        width: auto;
+        height: auto;
+        margin: 0;
+        overflow: visible;
+        clip-path: none;
+        white-space: nowrap;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-collapse-toggle:hover {
+        background-color: var(--subadmin-toolbar-hover-bg);
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-collapse-toggle:focus-visible {
+        outline: 2px solid var(--subadmin-toolbar-accent);
+        outline-offset: -2px;
+    }
+
+    #subadmin-toolbar .subadmin-toolbar-collapse-toggle::before {
+        content: "chevron_left";
+        content: "chevron_left" / "";
+        font-family: "Material Symbols Outlined";
+        font-size: 24px;
+        font-style: normal;
+        font-weight: normal;
+        line-height: 1;
+        font-feature-settings: "liga";
+    }
+
+    #subadmin-toolbar[data-position="right"] .subadmin-toolbar-collapse-toggle::before {
+        content: "chevron_right";
+        content: "chevron_right" / "";
+    }
+
+    #subadmin-toolbar .subadmin-toolbar-collapse-toggle .subadmin-toolbar-collapse-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    /* Brand on top, menu in the middle, widgets at the bottom. */
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-brand {
+        flex: 0 0 auto;
+        margin: 0;
+        padding: 0 16px;
+        min-height: var(--subadmin-toolbar-height, 56px);
+        box-sizing: border-box;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-collapse {
+        flex: 1 1 auto;
+        flex-direction: column;
+        align-items: stretch;
+        height: auto;
+        min-height: 0;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-menu {
+        flex: 1 1 auto;
+        flex-direction: column;
+        align-items: stretch;
+        height: auto;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        padding: 8px 0;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-item {
+        width: 100%;
+        flex-shrink: 0;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-link,
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-sublink {
+        width: 100%;
+        height: auto;
+        min-width: 0;
+        justify-content: flex-start;
+        white-space: normal;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-link {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        min-height: 44px;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-sublink {
+        padding-block: 10px;
+        padding-inline: 40px 16px;
+        min-height: 44px;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-submenu .subadmin-toolbar-submenu .subadmin-toolbar-sublink {
+        padding-left: 64px;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-text {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    /* Submenus open as an accordion under their parent. */
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-submenu,
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-subitem>.subadmin-toolbar-submenu {
+        display: none !important;
+        position: static;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        width: 100%;
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        border-radius: 0;
+        box-shadow: none;
+        background-color: transparent;
+        visibility: visible;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-submenu::before {
+        display: none;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-item.is-expanded>.subadmin-toolbar-submenu,
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-subitem.is-expanded>.subadmin-toolbar-submenu {
+        display: block !important;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-item.is-expanded>.subadmin-toolbar-link,
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-subitem.is-expanded>.subadmin-toolbar-sublink {
+        background-color: var(--subadmin-toolbar-hover-bg);
+    }
+
+    /* The caret sits at the end of the row and turns only when the item is expanded. */
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-caret {
+        margin-inline: auto 0;
+        flex-shrink: 0;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-item.has-submenu>.subadmin-toolbar-link .subadmin-toolbar-caret,
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-item.is-linked:hover:not(.is-expanded)>.subadmin-toolbar-split .subadmin-toolbar-caret {
+        transform: none;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-item.has-submenu.is-expanded>.subadmin-toolbar-link .subadmin-toolbar-caret,
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-item.is-linked.is-expanded>.subadmin-toolbar-split .subadmin-toolbar-caret {
+        transform: rotate(180deg);
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-subitem.is-expanded>.subadmin-toolbar-sublink .subadmin-toolbar-caret,
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-subitem.is-linked.is-expanded>.subadmin-toolbar-split .subadmin-toolbar-caret {
+        transform: rotate(90deg);
+    }
+
+    /* Hover does not open anything here, so the plus/minus glyph follows the expanded state only. */
+    #subadmin-toolbar[data-indicator="plus_minus"]:is([data-position="left"], [data-position="right"]):not(.is-narrow) .has-submenu:hover:not(.is-expanded)>a .subadmin-toolbar-caret::before,
+    #subadmin-toolbar[data-indicator="plus_minus"]:is([data-position="left"], [data-position="right"]):not(.is-narrow) .has-submenu:hover:not(.is-expanded)>.subadmin-toolbar-split .subadmin-toolbar-caret::before {
+        content: "add";
+    }
+
+    /* Split button: the link takes the row, the button sits at its end. */
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .has-submenu.is-linked>.subadmin-toolbar-link,
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .has-submenu.is-linked>.subadmin-toolbar-sublink {
+        flex: 1 1 0;
+        width: auto;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .has-submenu.is-linked>.subadmin-toolbar-submenu {
+        flex: 0 0 100%;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-item.is-linked>.subadmin-toolbar-split {
+        align-self: center;
+        margin-inline: 0 12px;
+    }
+
+    /* Widgets stay at the bottom of the sidebar. */
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-widgets {
+        flex: 0 0 auto;
+        flex-wrap: wrap;
+        height: auto;
+        min-height: 54px;
+        margin: 0;
+        padding: 12px 16px;
+        width: 100%;
+        box-sizing: border-box;
+        gap: 8px 12px;
+        border-top: 1px solid var(--subadmin-toolbar-border);
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-widget {
+        height: auto;
+    }
+
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) :is(.theme-dropdown-menu, .sat-theme-user-dropdown) {
+        bottom: calc(100% + 8px);
+        top: auto;
+        margin-top: 0;
+        margin-bottom: 4px;
+    }
+
+    /* A panel at the sidebar's near edge opens toward the page. */
+    #subadmin-toolbar[data-position="left"]:not(.is-narrow) .sat-theme-user-dropdown {
+        left: 0;
+        right: auto;
+    }
+}
+
+/* ==========================================================================
+   Collapsed rail (collapsible sidebar), wide screens only. The state comes
+   from the html attribute set by the early script, or from the configured
+   start state when the visitor has not chosen yet.
+   ========================================================================== */
+@media (min-width: 769px) {
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow)[data-position] {
+        width: 64px;
+    }
+
+    /* Brand: only the logo shows, the title stays readable by assistive tech. */
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-brand {
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+        padding: 8px 0;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-logo {
+        margin: 0;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-title {
+        position: absolute !important;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-collapse-toggle {
+        align-self: center;
+        justify-content: center;
+        width: 44px;
+        min-width: 0;
+        margin-inline: 0;
+        padding: 0;
+    }
+
+    /* The rail shows the icon only; the label stays readable by assistive tech. */
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-collapse-toggle .subadmin-toolbar-collapse-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+
+    html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar[data-position="left"]:not(.is-narrow) .subadmin-toolbar-collapse-toggle::before,
+    html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-position="left"][data-sidebar-collapsed="true"]:not(.is-narrow) .subadmin-toolbar-collapse-toggle::before {
+        content: "chevron_right";
+        content: "chevron_right" / "";
+    }
+
+    html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar[data-position="right"]:not(.is-narrow) .subadmin-toolbar-collapse-toggle::before,
+    html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-position="right"][data-sidebar-collapsed="true"]:not(.is-narrow) .subadmin-toolbar-collapse-toggle::before {
+        content: "chevron_left";
+        content: "chevron_left" / "";
+    }
+
+    /* Top-level rows show the icon (or the initial) only; the text stays readable by assistive tech. */
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-item>.subadmin-toolbar-link {
+        position: relative;
+        justify-content: center;
+        padding-inline: 0;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-item>.subadmin-toolbar-link>.subadmin-toolbar-text {
+        position: absolute !important;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-item>.subadmin-toolbar-link>.subadmin-toolbar-caret,
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-item>.subadmin-toolbar-split {
+        display: none;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-item>.subadmin-toolbar-link>.subadmin-toolbar-icon {
+        margin: 0;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-item>.subadmin-toolbar-link>.subadmin-toolbar-initial {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background-color: var(--subadmin-toolbar-hover-bg);
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1;
+    }
+
+    /* Widgets stack as a centered column of icon-only controls. */
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-widgets {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 0;
+        overflow: visible;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-widget {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        position: static;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-widget :is(button, [role="button"]) {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-widget :is(button, a, [role="button"]):focus-visible {
+        outline: 2px solid var(--subadmin-toolbar-accent);
+        outline-offset: 2px;
+    }
+
+    /* Text labels of a widget stay readable by assistive tech. */
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-widget :is(.theme-toggle-text, .sat-theme-user-name, .sat-theme-user-email) {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    /* A widget that cannot shrink to an icon opts out with this class. */
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-widget.subadmin-widget-no-rail {
+        display: none;
+    }
+
+    /* Widget panels open sideways, toward the page, aligned to the bottom of their button. */
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow)[data-position="left"] .subadmin-toolbar-widget :is(.sat-theme-user-dropdown, .theme-dropdown-menu) {
+        top: auto;
+        bottom: 0;
+        left: calc(100% + 18px);
+        right: auto;
+        margin: 0;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow)[data-position="right"] .subadmin-toolbar-widget :is(.sat-theme-user-dropdown, .theme-dropdown-menu) {
+        top: auto;
+        bottom: 0;
+        right: calc(100% + 18px);
+        left: auto;
+        margin: 0;
+    }
+
+    /* Submenus become flyouts at the side of the rail. A top-level flyout is
+       fixed so the scrolling menu column never clips it; script sets its row
+       and the edge it attaches to. The !important flags override the
+       equally flagged accordion rules of the expanded sidebar. */
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-item>.subadmin-toolbar-submenu {
+        display: block !important;
+        position: fixed;
+        top: var(--subadmin-toolbar-flyout-top, 0px) !important;
+        left: var(--subadmin-toolbar-flyout-edge, 64px) !important;
+        right: auto !important;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow)[data-position="right"] .subadmin-toolbar-item>.subadmin-toolbar-submenu {
+        left: auto !important;
+        right: var(--subadmin-toolbar-flyout-edge, 64px) !important;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-submenu {
+        width: max-content;
+        min-width: var(--subadmin-toolbar-submenu-min-width, 220px);
+        max-width: 320px;
+        padding: 8px 0;
+        background-color: var(--subadmin-toolbar-submenu-bg);
+        border-radius: var(--subadmin-toolbar-radius, 4px);
+        box-shadow: var(--subadmin-toolbar-submenu-shadow, 0 4px 12px rgba(0, 0, 0, .4));
+        z-index: calc(var(--subadmin-toolbar-z-index) + 1);
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-subitem>.subadmin-toolbar-submenu {
+        display: block !important;
+        position: absolute;
+        top: 0 !important;
+        margin-top: -8px;
+        left: 100% !important;
+        right: auto !important;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow)[data-position="right"] .subadmin-toolbar-subitem>.subadmin-toolbar-submenu {
+        left: auto !important;
+        right: 100% !important;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-item:hover>.subadmin-toolbar-submenu,
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-subitem:hover>.subadmin-toolbar-submenu,
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-item.is-open>.subadmin-toolbar-submenu,
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-subitem.is-open>.subadmin-toolbar-submenu {
+        visibility: visible;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* Escape hides a flyout opened by hover until the pointer leaves. */
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-item.is-dismissed>.subadmin-toolbar-submenu,
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-subitem.is-dismissed>.subadmin-toolbar-submenu {
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-sublink {
+        padding-block: 10px;
+        padding-inline: 16px;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-submenu .subadmin-toolbar-submenu .subadmin-toolbar-sublink {
+        padding-inline-start: 16px;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-subitem.has-submenu>.subadmin-toolbar-sublink .subadmin-toolbar-caret,
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-subitem.is-expanded>.subadmin-toolbar-sublink .subadmin-toolbar-caret {
+        transform: none;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow)[data-position="right"] .subadmin-toolbar-subitem.has-submenu>.subadmin-toolbar-sublink .subadmin-toolbar-caret {
+        transform: scaleX(-1);
+    }
+}
+
+/* The sidebar never animates its layout: the bar and the page jump straight to the new size. */
+@media (min-width: 769px) {
+    #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) {
+        transition: none;
+    }
+
+    /* Gin's sticky header and page wrapper would otherwise slide when the sidebar changes size. */
+    body:has(#subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow)) :is(.region-sticky, .gin-secondary-toolbar, .dialog-off-canvas-main-canvas) {
+        transition: none !important;
+    }
 }

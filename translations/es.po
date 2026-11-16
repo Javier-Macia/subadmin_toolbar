@@ -572,3 +572,42 @@ msgstr "En modo @mode, el color del texto tiene una relación de contraste de @r
 
 msgid "Reset every appearance option to its default? Unsaved changes in this section are lost."
 msgstr "¿Restablecer todas las opciones de apariencia a sus valores por defecto? Se perderán los cambios sin guardar de esta sección."
+
+msgid "Layout"
+msgstr "Disposición"
+
+msgid "The toolbar sits at the top of the page, or becomes a sidebar on the left or right."
+msgstr "La barra se sitúa en la parte superior de la página o se convierte en una barra lateral a la izquierda o a la derecha."
+
+msgid "Position"
+msgstr "Posición"
+
+msgid "Top"
+msgstr "Arriba"
+
+msgid "Left"
+msgstr "Izquierda"
+
+msgid "Right"
+msgstr "Derecha"
+
+msgid "Sidebar mode"
+msgstr "Modo de la barra lateral"
+
+msgid "Fixed"
+msgstr "Fija"
+
+msgid "Collapsible"
+msgstr "Plegable"
+
+msgid "Sidebar width"
+msgstr "Ancho de la barra lateral"
+
+msgid "Start the sidebar collapsed"
+msgstr "Iniciar la barra lateral plegada"
+
+msgid "Collapse menu"
+msgstr "Colapsar menú lateral"
+
+msgid "Expand menu"
+msgstr "Expandir menú lateral"
