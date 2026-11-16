@@ -285,9 +285,14 @@
     items.forEach(function (li, i) {
       if (li.dataset.satOrder === undefined) li.dataset.satOrder = String(i);
     });
-    // Restore the original order (items return before the "More" item).
-    items.sort(function (a, b) { return a.dataset.satOrder - b.dataset.satOrder; })
-      .forEach(function (li) { root.appendChild(li); });
+    // Restore the original order (items return before the "More" item). Only
+    // touch the DOM when something is out of place: re-attaching nodes under
+    // the pointer drops their :hover and restarts the caret transition.
+    var ordered = items.slice().sort(function (a, b) { return a.dataset.satOrder - b.dataset.satOrder; });
+    if (ordered.some(function (li, i) { return li !== items[i]; })) {
+      ordered.forEach(function (li) { root.appendChild(li); });
+    }
+    items = ordered;
 
     if (isNarrow || root.scrollWidth <= root.clientWidth + 1 || items.length < 2) return;
 
@@ -376,6 +381,8 @@
           e.stopPropagation();
           var li = this.closest('.has-submenu');
           if (li) {
+            // Accordion: opening one closes the others (but not its ancestors).
+            if (!li.classList.contains('is-expanded')) closeAll(li);
             li.classList.toggle('is-expanded');
             syncAria(li);
           }
@@ -398,6 +405,10 @@
         });
         barEl.addEventListener('focusout', function (e) {
           var next = e.relatedTarget;
+          // In compact mode closing on focus loss collapses the open list on
+          // mousedown, shifting the layout so the click lands on another item
+          // and is lost. The click handler already closes the others.
+          if (bar.classList.contains('is-narrow') && next && barEl.contains(next)) return;
           closeAll(next && next.closest && next.closest('.subadmin-toolbar-menu') ? next : null);
         });
         barEl.addEventListener('click', function (e) {
@@ -421,8 +432,13 @@
       // Global listeners and the initial layout run once per page, not on
       // every AJAX attach.
       once('sat-global', 'html').forEach(function () {
-        ['resize', 'transitionend', 'drupalToolbarTabChange', 'drupalToolbarTrayChange', 'drupalViewportOffsetChange']
+        ['resize', 'drupalToolbarTabChange', 'drupalToolbarTrayChange', 'drupalViewportOffsetChange']
           .forEach(function (name) { window.addEventListener(name, adjust); });
+        // Other toolbars animate their own width; ours must not re-layout on
+        // its own hover transitions (that made the caret and submenus flicker).
+        window.addEventListener('transitionend', function (e) {
+          if (!(e.target.closest && e.target.closest('#subadmin-toolbar'))) adjust();
+        });
 
         adjust();
         // Deferred pass for Gin/sidebars that render asynchronously.
