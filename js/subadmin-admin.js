@@ -61,15 +61,22 @@
 
   const esc = (value) => Drupal.checkPlain(String(value ?? ''));
 
-  const isFontAwesome = (iconType, icon) =>
-    (iconType && iconType.startsWith('fa')) || (icon && icon.startsWith('fa'));
+  const isSeparator = (node) => node && node.type === 'separator';
+
+  /**
+   * Whether the icon family is a FontAwesome one (fas, fab...).
+   *
+   * Only the family decides: Material names such as "favorite" or "face"
+   * also start with "fa".
+   */
+  const isFontAwesome = (iconType) => !!iconType && iconType.startsWith('fa');
 
   /**
    * Returns the markup of a link icon.
    */
   function iconMarkup(iconType, icon) {
-    if (isFontAwesome(iconType, icon)) {
-      return `<i class="${esc(icon || 'fas fa-link')}" aria-hidden="true"></i>`;
+    if (isFontAwesome(iconType)) {
+      return `<i class="${esc(iconType)} ${esc(icon || 'fa-link')}" aria-hidden="true"></i>`;
     }
     return `<span class="${esc(iconType || 'material-symbols-outlined')}" translate="no" aria-hidden="true">${esc(icon || 'link')}</span>`;
   }
@@ -146,9 +153,14 @@
           <div class="subadmin-builder-preview">
             <div class="subadmin-preview-title">
               <span>${Drupal.t('Toolbar navigation')} <span class="subadmin-count" aria-live="polite"></span></span>
-              <button type="button" class="subadmin-btn-add-item">
-                <span class="material-symbols-outlined" aria-hidden="true">add</span> ${Drupal.t('Add')}
-              </button>
+              <span class="subadmin-preview-actions">
+                <button type="button" class="subadmin-btn-add-item">
+                  <span class="material-symbols-outlined" aria-hidden="true">add</span> ${Drupal.t('Add')}
+                </button>
+                <button type="button" class="subadmin-btn-add-separator">
+                  <span class="material-symbols-outlined" aria-hidden="true">horizontal_rule</span> ${Drupal.t('Add separator')}
+                </button>
+              </span>
             </div>
             <div class="subadmin-tree-tools">
               <input type="search" class="subadmin-tree-filter" placeholder="${Drupal.t('Filter links…')}" aria-label="${Drupal.t('Filter links')}">
@@ -243,7 +255,7 @@
     createItemElement(node) {
       const disabled = node.status === 'disabled';
       const li = document.createElement('li');
-      li.className = 'subadmin-drag-item' + (disabled ? ' disabled-item' : '');
+      li.className = 'subadmin-drag-item' + (disabled ? ' disabled-item' : '') + (isSeparator(node) ? ' is-separator' : '');
       li.dataset.id = node.id;
 
       li.innerHTML = `
@@ -254,7 +266,8 @@
           <button type="button" class="subadmin-drag-handle" aria-roledescription="${Drupal.t('sortable')}">
             <span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span>
           </button>
-          <span class="subadmin-item-icon">${iconMarkup(node.iconType, node.icon)}</span>
+          <span class="subadmin-item-icon">${isSeparator(node) ? '<span class="material-symbols-outlined" aria-hidden="true">horizontal_rule</span>' : iconMarkup(node.iconType, node.icon)}</span>
+          <span class="subadmin-item-mark" hidden>${Drupal.t('Separator')}</span>
           <span class="subadmin-item-title-text"></span>
           <span class="subadmin-item-actions">
             <label class="subadmin-toggle-switch" title="${Drupal.t('Enable/disable')}">
@@ -270,18 +283,22 @@
           </span>
         </div>`;
 
-      this.setTitle(li, node.title);
       li.nodeData = node;
+      this.setTitle(li, node.title);
       return li;
     },
 
     setTitle(li, title) {
+      const separator = isSeparator(li.nodeData);
+      const label = title || (separator ? Drupal.t('Separator') : Drupal.t('Untitled'));
       const text = headerOf(li).querySelector('.subadmin-item-title-text');
-      text.textContent = title || Drupal.t('Untitled');
+      text.textContent = label;
       text.classList.toggle('is-untitled', !title);
+      // The mark tells a separator that has a title from a link.
+      headerOf(li).querySelector('.subadmin-item-mark').hidden = !separator || !title;
       headerOf(li).querySelector('.subadmin-drag-handle').setAttribute(
         'aria-label',
-        Drupal.t('Reorder @title. Use the arrow keys to move it or change its level.', { '@title': title || Drupal.t('Untitled') })
+        Drupal.t('Reorder @title. Use the arrow keys to move it or change its level.', { '@title': label })
       );
     },
 
@@ -301,6 +318,7 @@
         if (!id) return;
         items.push({
           id,
+          type: value(tr, '.link-type', 'link') === 'separator' ? 'separator' : 'link',
           pid: value(tr, '.link-pid'),
           title: value(tr, 'input[name$="[title]"]'),
           url: value(tr, 'input[name$="[url]"]'),
@@ -441,7 +459,8 @@
       const container = this.visualContainer;
 
       container.addEventListener('click', (e) => {
-        if (e.target.closest('.subadmin-btn-add-item')) return self.addItem(e);
+        if (e.target.closest('.subadmin-btn-add-item')) return self.addItem(e, 'link');
+        if (e.target.closest('.subadmin-btn-add-separator')) return self.addItem(e, 'separator');
         if (e.target.closest('.subadmin-btn-expand-all')) return self.setAllCollapsed(false);
         if (e.target.closest('.subadmin-btn-collapse-all')) return self.setAllCollapsed(true);
 
@@ -492,14 +511,14 @@
     },
 
     /**
-     * Triggers the "Add link" button of the hidden Drupal form.
+     * Triggers the "Add link" or "Add separator" button of the hidden Drupal form.
      */
-    addItem(e) {
+    addItem(e, type) {
       e.preventDefault();
       this.wasAddingItem = true;
       this.syncVisualToClassic();
 
-      const addBtn = document.querySelector('#links-wrapper .subadmin-btn-add-row');
+      const addBtn = document.querySelector(`#links-wrapper ${type === 'separator' ? '.subadmin-btn-add-separator-row' : '.subadmin-btn-add-row'}`);
       if (addBtn) {
         addBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
         addBtn.click();
@@ -508,7 +527,7 @@
 
     deleteItem(li) {
       const data = li.nodeData;
-      const title = data.title || Drupal.t('Untitled');
+      const title = data.title || (isSeparator(data) ? Drupal.t('Separator') : Drupal.t('Untitled'));
       const message = li.classList.contains('has-children')
         ? Drupal.t('Remove "@title" and its sub-links?', { '@title': title })
         : Drupal.t('Remove "@title"?', { '@title': title });
@@ -636,7 +655,8 @@
 
       const prev = d.rows[gap - 1];
       const next = d.rows[gap];
-      const max = prev ? prev.depth + 1 : 0;
+      // A separator cannot have children.
+      const max = prev ? prev.depth + (isSeparator(prev.li.nodeData) ? 0 : 1) : 0;
       const min = Math.min(next ? next.depth : 0, max);
       const wanted = d.startDepth + Math.round((d.clientX - d.startX) / d.indent);
       const depth = Math.max(min, Math.min(max, wanted));
@@ -765,7 +785,7 @@
       else if (key === 'ArrowDown' && nextSibling) {
         nextSibling.after(li);
       }
-      else if (key === 'ArrowRight' && prevSibling) {
+      else if (key === 'ArrowRight' && prevSibling && !isSeparator(prevSibling.nodeData)) {
         // Become the last child of the previous sibling.
         let sub = sublistOf(prevSibling);
         if (!sub) {
@@ -855,19 +875,8 @@
         `<option value="${esc(value)}" ${value === selectedType ? 'selected' : ''}>${esc(label)}</option>`
       ).join('');
 
-      this.editorEmpty.hidden = true;
-      this.editorWrapper.hidden = false;
-      this.editorWrapper.innerHTML = `
-        <div class="subadmin-editor-form">
-          <h4 class="subadmin-editor-heading">
-            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-            <span class="subadmin-editor-heading-text">${esc(data.title || Drupal.t('New link'))}</span>
-          </h4>
-          <div class="subadmin-form-group">
-            <label>${Drupal.t('Link title')}
-              <input type="text" class="subadmin-editor-title" value="${esc(field('input[name$="[title]"]'))}">
-            </label>
-          </div>
+      const separator = isSeparator(data);
+      const linkFieldsHTML = `
           <div class="subadmin-form-group">
             <label>${Drupal.t('URL or Drupal path')}
               <input type="text" class="subadmin-editor-url" value="${esc(field('input[name$="[url]"]'))}" placeholder="/admin/content">
@@ -886,25 +895,43 @@
             </div>
             <div class="subadmin-icon-grid" role="group" aria-label="${Drupal.t('Suggested icons')}"></div>
             <p class="subadmin-field-help" id="subadmin-icon-help">${Drupal.t('If the preview shows text instead of an icon, that icon name does not exist.')}</p>
+          </div>`;
+
+      this.editorEmpty.hidden = true;
+      this.editorWrapper.hidden = false;
+      this.editorWrapper.innerHTML = `
+        <div class="subadmin-editor-form">
+          <h4 class="subadmin-editor-heading">
+            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+            <span class="subadmin-editor-heading-text">${esc(data.title || (separator ? Drupal.t('Separator') : Drupal.t('New link')))}</span>
+          </h4>
+          <div class="subadmin-form-group">
+            <label>${separator ? Drupal.t('Group title (optional)') : Drupal.t('Link title')}
+              <input type="text" class="subadmin-editor-title" value="${esc(field('input[name$="[title]"]'))}">
+            </label>
           </div>
+          ${separator ? '' : linkFieldsHTML}
           ${groupsHTML}
         </div>`;
 
       const onChange = () => {
         this.applyEditorChanges();
-        this.renderIconHelpers();
+        if (!separator) this.renderIconHelpers();
       };
       this.editorWrapper.querySelectorAll('input, select').forEach((el) => {
         el.addEventListener('input', onChange);
         el.addEventListener('change', onChange);
       });
-      this.editorWrapper.querySelector('.subadmin-icon-grid').addEventListener('click', (e) => {
-        const button = e.target.closest('button[data-icon]');
-        if (!button) return;
-        this.editorWrapper.querySelector('.subadmin-editor-icon').value = button.dataset.icon;
-        onChange();
-      });
-      this.renderIconHelpers();
+      const iconGrid = this.editorWrapper.querySelector('.subadmin-icon-grid');
+      if (iconGrid) {
+        iconGrid.addEventListener('click', (e) => {
+          const button = e.target.closest('button[data-icon]');
+          if (!button) return;
+          this.editorWrapper.querySelector('.subadmin-editor-icon').value = button.dataset.icon;
+          onChange();
+        });
+      }
+      if (!separator) this.renderIconHelpers();
 
       if (focusTitle) {
         this.editorWrapper.querySelector('.subadmin-editor-title').focus();
@@ -927,7 +954,7 @@
 
       const grid = q('.subadmin-icon-grid');
       // Suggestions are Material names; other families only get the preview.
-      grid.hidden = isFontAwesome(type, icon) || !type.startsWith('material');
+      grid.hidden = isFontAwesome(type) || !type.startsWith('material');
       if (grid.hidden) return;
 
       // Rebuilding the buttons while one is being pressed would swallow its
@@ -960,23 +987,27 @@
       const row = data.tr;
       const q = (selector) => this.editorWrapper.querySelector(selector);
 
+      const separator = isSeparator(data);
       data.title = q('.subadmin-editor-title').value;
-      data.url = q('.subadmin-editor-url').value;
-      data.iconType = q('.subadmin-editor-icon-type').value;
-      data.icon = q('.subadmin-editor-icon').value;
-
       this.setTitle(li, data.title);
-      q('.subadmin-editor-heading-text').textContent = data.title || Drupal.t('New link');
-      headerOf(li).querySelector('.subadmin-item-icon').innerHTML = iconMarkup(data.iconType, data.icon);
+      q('.subadmin-editor-heading-text').textContent = data.title || (separator ? Drupal.t('Separator') : Drupal.t('New link'));
+      if (!separator) {
+        data.url = q('.subadmin-editor-url').value;
+        data.iconType = q('.subadmin-editor-icon-type').value;
+        data.icon = q('.subadmin-editor-icon').value;
+        headerOf(li).querySelector('.subadmin-item-icon').innerHTML = iconMarkup(data.iconType, data.icon);
+      }
 
       const set = (selector, value) => {
         const input = row.querySelector(selector);
         if (input) input.value = value;
       };
       set('input[name$="[title]"]', data.title);
-      set('input[name$="[url]"]', data.url);
-      set('select[name$="[icon_type]"]', data.iconType);
-      set('input[name$="[icon]"]', data.icon);
+      if (!separator) {
+        set('input[name$="[url]"]', data.url);
+        set('select[name$="[icon_type]"]', data.iconType);
+        set('input[name$="[icon]"]', data.icon);
+      }
 
       this.editorWrapper.querySelectorAll('.subadmin-editor-group-option').forEach((chk) => {
         const group = CSS.escape(chk.dataset.group);

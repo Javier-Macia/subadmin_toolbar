@@ -1683,3 +1683,76 @@ body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:ha
         transition: none !important;
     }
 }
+
+/* ==========================================================================
+   Separators: a line with an optional group title, never focusable.
+   A top-level separator of the top bar is a vertical line; everywhere else
+   (sidebar, hamburger list, submenus, flyouts, "More") it is a horizontal
+   line that spans the row, with the title above it.
+   ========================================================================== */
+#subadmin-toolbar .is-separator {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+#subadmin-toolbar .subadmin-toolbar-separator-title {
+    display: block;
+    padding-block: 8px 4px;
+    padding-inline: var(--subadmin-toolbar-item-padding, 16px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: color-mix(in srgb, var(--subadmin-toolbar-text) 65%, transparent);
+    font-family: inherit;
+    font-size: calc(var(--subadmin-toolbar-font-size, 14px) * .85);
+    font-weight: var(--subadmin-toolbar-font-weight);
+    letter-spacing: var(--subadmin-toolbar-letter-spacing, normal);
+}
+
+#subadmin-toolbar .subadmin-toolbar-subitem.is-separator,
+#subadmin-toolbar:is([data-position="left"], [data-position="right"]) .subadmin-toolbar-item.is-separator,
+#subadmin-toolbar.is-narrow .subadmin-toolbar-item.is-separator {
+    display: block;
+    width: 100%;
+    margin-block: 6px;
+    border-top: 0;
+    border-bottom: 1px solid var(--subadmin-toolbar-border);
+}
+
+/* The hamburger list already draws a line above every item: the line of a
+   top-level separator lies over the one of the item that follows. */
+#subadmin-toolbar.is-narrow .subadmin-toolbar-menu>.subadmin-toolbar-item.is-separator {
+    margin-block: 12px -1px;
+}
+
+#subadmin-toolbar:not(.is-narrow)[data-position="top"] .subadmin-toolbar-menu>.subadmin-toolbar-item.is-separator {
+    flex: 0 0 1px;
+    align-self: center;
+    width: 1px;
+    height: 60%;
+    margin-inline: 4px;
+    background-color: var(--subadmin-toolbar-border);
+}
+
+#subadmin-toolbar:not(.is-narrow)[data-position="top"] .subadmin-toolbar-menu>.subadmin-toolbar-item.is-separator>.subadmin-toolbar-separator-title {
+    display: none;
+}
+
+/* In the collapsed rail only the line of a top-level separator remains. */
+@media (min-width: 769px) {
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-item.is-separator {
+        width: auto;
+        margin-inline: 12px;
+    }
+
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-item.is-separator>.subadmin-toolbar-separator-title {
+        display: none;
+    }
+}
+
+/* A separator trimmed by the overflow logic stays out of the layout. */
+#subadmin-toolbar .is-separator[hidden] {
+    display: none !important;
+}

@@ -318,8 +318,37 @@
     return li.querySelector(':scope > .subadmin-toolbar-split') || triggerOf(li);
   }
 
-  function childItems(ul) {
+  /** Every item of a list, separators included. */
+  function listItems(ul) {
     return Array.from(ul.children).filter(function (el) { return el.tagName === 'LI'; });
+  }
+
+  /** The items of a list that can take the focus: separators are left out. */
+  function childItems(ul) {
+    return listItems(ul).filter(function (el) { return !el.classList.contains('is-separator'); });
+  }
+
+  /**
+   * Hides the separators of a list that have no link on one of their sides:
+   * leading, trailing and consecutive ones. It is needed where items move
+   * between lists, as the markup is already trimmed by the server.
+   */
+  function trimSeparators(ul) {
+    var afterLink = false;
+    var last = null;
+    listItems(ul).forEach(function (li) {
+      if (!li.classList.contains('is-separator')) {
+        afterLink = true;
+        last = null;
+        return;
+      }
+      var show = afterLink;
+      if (show) last = li;
+      afterLink = false;
+      if (show) dropAttr(li, 'hidden');
+      else setAttr(li, 'hidden', '');
+    });
+    if (last) setAttr(last, 'hidden', '');
   }
 
   /**
@@ -609,12 +638,12 @@
 
     // Put everything back in its original position first.
     if (moreList) {
-      childItems(moreList)
+      listItems(moreList)
         .sort(function (a, b) { return a.dataset.satOrder - b.dataset.satOrder; })
         .forEach(function (li) { demote(li, false); root.insertBefore(li, more); });
       more.remove();
     }
-    var items = childItems(root);
+    var items = listItems(root);
     items.forEach(function (li, i) {
       if (li.dataset.satOrder === undefined) li.dataset.satOrder = String(i);
     });
@@ -627,6 +656,7 @@
     }
     items = ordered;
 
+    trimSeparators(root);
     if (isNarrow || root.scrollWidth <= root.clientWidth + 1 || items.length < 2) return;
 
     more = document.createElement('li');
@@ -645,7 +675,9 @@
       var li = movable.pop();
       demote(li, true);
       moreList.insertBefore(li, moreList.firstChild);
+      trimSeparators(root);
     }
+    trimSeparators(moreList);
     if (!childItems(moreList).length) more.remove();
   }
 

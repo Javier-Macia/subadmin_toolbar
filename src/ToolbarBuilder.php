@@ -137,31 +137,65 @@ class ToolbarBuilder {
 
   /**
    * Filters the stored links by role and arranges them as a tree.
+   *
+   * Separators follow the same filters as links. A separator is only kept
+   * between two visible links of its level, so a parent that is left with
+   * separators alone is not a parent.
    */
   protected function buildLinks(array $stored_links, array $user_roles, CacheableMetadata $cacheability): array {
     $links = [];
     foreach ($stored_links as $index => $link) {
-      if (empty($link['title']) || !$this->isVisible($link, $user_roles, $cacheability)) {
+      $is_separator = ($link['type'] ?? 'link') === 'separator';
+      if ((!$is_separator && empty($link['title'])) || !$this->isVisible($link, $user_roles, $cacheability)) {
         continue;
       }
       $id = !empty($link['id']) ? $link['id'] : 'link_' . $index;
       $links[$id] = [
         'id' => $id,
+        'type' => $is_separator ? 'separator' : 'link',
         'pid' => $link['pid'] ?? '',
-        'title' => $link['title'],
-        'url' => empty($link['url']) ? '#' : UrlHelper::stripDangerousProtocols($link['url']),
-        'icon' => $link['icon'] ?? '',
+        'title' => $link['title'] ?? '',
+        'url' => $is_separator || empty($link['url']) ? '#' : UrlHelper::stripDangerousProtocols($link['url']),
+        'icon' => $is_separator ? '' : ($link['icon'] ?? ''),
         'icon_type' => $link['icon_type'] ?? 'material-symbols-outlined',
       ];
     }
 
-    // Links whose parent is missing (or hidden) are promoted to the root.
+    // Links whose parent is missing (or hidden) are promoted to the root, and
+    // so are the children of a separator, which cannot be a parent.
     $children = [];
     foreach ($links as $id => $link) {
-      $parent = $link['pid'] !== $id && isset($links[$link['pid']]) ? $link['pid'] : '';
-      $children[$parent][] = $id;
+      $is_parent = $link['pid'] !== $id && isset($links[$link['pid']]) && $links[$link['pid']]['type'] === 'link';
+      $children[$is_parent ? $link['pid'] : ''][] = $id;
     }
-    return $this->buildTree($links, $children, '');
+    return $this->pruneSeparators($this->buildTree($links, $children, ''));
+  }
+
+  /**
+   * Drops the separators that do not sit between two links of their level.
+   *
+   * That covers leading, trailing and consecutive separators, also those that
+   * only became so after other items were filtered out.
+   */
+  protected function pruneSeparators(array $tree): array {
+    $pruned = [];
+    $pending = NULL;
+    foreach ($tree as $id => $item) {
+      if ($item['type'] === 'separator') {
+        // Only the first separator after a link can be kept.
+        if ($pruned && $pending === NULL) {
+          $pending = [$id, $item];
+        }
+        continue;
+      }
+      $item['below'] = $this->pruneSeparators($item['below']);
+      if ($pending !== NULL) {
+        $pruned[$pending[0]] = $pending[1];
+        $pending = NULL;
+      }
+      $pruned[$id] = $item;
+    }
+    return $pruned;
   }
 
   /**
