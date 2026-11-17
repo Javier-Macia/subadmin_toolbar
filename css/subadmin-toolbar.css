@@ -95,6 +95,8 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
     align-items: center;
     box-sizing: border-box;
     transition: top .2s ease, left .15s ease, width .15s ease;
+    --subadmin-toolbar-rail-width: 64px;
+    --subadmin-toolbar-sidebar-width: 260px;
 }
 
 .subadmin-toolbar-inner {
@@ -544,7 +546,7 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
 }
 
 #subadmin-toolbar.is-narrow .subadmin-toolbar-submenu .subadmin-toolbar-submenu .subadmin-toolbar-sublink {
-    padding-left: 64px;
+    padding-inline-start: 64px;
 }
 
 #subadmin-toolbar.is-narrow .subadmin-toolbar-widgets {
@@ -587,7 +589,7 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
     background-color: var(--subadmin-toolbar-bg);
     color: var(--subadmin-toolbar-text);
     text-decoration: none;
-    transition: all .15s ease;
+    transition: background-color .15s ease, color .15s ease, border-color .15s ease;
 }
 
 #subadmin-toolbar.is-narrow .subadmin-toolbar-widget ul.menu a:hover {
@@ -766,7 +768,7 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
         background-color: var(--subadmin-toolbar-bg);
         color: var(--subadmin-toolbar-text);
         text-decoration: none;
-        transition: all .15s ease;
+        transition: background-color .15s ease, color .15s ease, border-color .15s ease;
     }
 
     #subadmin-toolbar .subadmin-toolbar-widget ul.menu a:hover {
@@ -794,22 +796,12 @@ body:has(#subadmin-toolbar[data-layout-mode="gin-v"]) {
     height: calc(100vh - var(--subadmin-toolbar-offset, 56px)) !important;
 }
 
-/* Gin secondary toolbar se desplaza hacia abajo cuando está visible */
-.gin-secondary-toolbar {
-    margin-top: var(--subadmin-toolbar-content-top, var(--subadmin-toolbar-height, 56px)) !important;
-}
-
-/* Cuando .gin-secondary-toolbar está oculta (display: none) o ausente en el DOM */
+/* Gin content below the toolbar: the secondary toolbar, or whichever sticky/content element comes first when it is hidden or absent. */
+.gin-secondary-toolbar,
 body.gin--secondary-toolbar-hidden .region-sticky-watcher,
-body:not(:has(.gin-secondary-toolbar)) .region-sticky-watcher {
-    margin-top: var(--subadmin-toolbar-content-top, var(--subadmin-toolbar-height, 56px)) !important;
-}
-
+body:not(:has(.gin-secondary-toolbar)) .region-sticky-watcher,
 body.gin--secondary-toolbar-hidden:not(:has(.region-sticky-watcher)) .region-sticky,
-body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)) .region-sticky {
-    margin-top: var(--subadmin-toolbar-content-top, var(--subadmin-toolbar-height, 56px)) !important;
-}
-
+body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)) .region-sticky,
 body.gin--secondary-toolbar-hidden:not(:has(.region-sticky-watcher)):not(:has(.region-sticky)) #block-gin-content,
 body.gin--secondary-toolbar-hidden:not(:has(.region-sticky-watcher)):not(:has(.region-sticky)) .page-content,
 body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:has(.region-sticky)) #block-gin-content,
@@ -1253,9 +1245,17 @@ body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:ha
         outline-offset: -2px;
     }
 
+    /* The glyph points toward the direction the button moves the sidebar; state rules only change the variable. */
+    #subadmin-toolbar {
+        --subadmin-toolbar-chevron: "chevron_left";
+    }
+
+    #subadmin-toolbar[data-position="right"] {
+        --subadmin-toolbar-chevron: "chevron_right";
+    }
+
     #subadmin-toolbar .subadmin-toolbar-collapse-toggle::before {
-        content: "chevron_left";
-        content: "chevron_left" / "";
+        content: var(--subadmin-toolbar-chevron);
         font-family: "Material Symbols Outlined";
         font-size: 24px;
         font-style: normal;
@@ -1264,9 +1264,11 @@ body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:ha
         font-feature-settings: "liga";
     }
 
-    #subadmin-toolbar[data-position="right"] .subadmin-toolbar-collapse-toggle::before {
-        content: "chevron_right";
-        content: "chevron_right" / "";
+    /* Alternative text keeps the ligature name out of the accessibility tree where supported. */
+    @supports (content: "a" / "") {
+        #subadmin-toolbar .subadmin-toolbar-collapse-toggle::before {
+            content: var(--subadmin-toolbar-chevron) / "";
+        }
     }
 
     #subadmin-toolbar .subadmin-toolbar-collapse-toggle .subadmin-toolbar-collapse-label {
@@ -1335,7 +1337,7 @@ body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:ha
     }
 
     #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-submenu .subadmin-toolbar-submenu .subadmin-toolbar-sublink {
-        padding-left: 64px;
+        padding-inline-start: 64px;
     }
 
     #subadmin-toolbar:is([data-position="left"], [data-position="right"]):not(.is-narrow) .subadmin-toolbar-text {
@@ -1460,7 +1462,7 @@ body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:ha
    ========================================================================== */
 @media (min-width: 769px) {
     :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow)[data-position] {
-        width: 64px;
+        width: var(--subadmin-toolbar-rail-width, 64px);
     }
 
     /* Brand: only the logo shows, the title stays readable by assistive tech. */
@@ -1475,7 +1477,11 @@ body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:ha
         margin: 0;
     }
 
-    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-title {
+        /* Rail: titles, labels and widget texts are hidden visually and stay readable by assistive tech. */
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-title,
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-item>.subadmin-toolbar-link>.subadmin-toolbar-text,
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-collapse-toggle .subadmin-toolbar-collapse-label,
+    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-widget :is(.theme-toggle-text, .sat-theme-user-name, .sat-theme-user-email) {
         position: absolute !important;
         width: 1px;
         height: 1px;
@@ -1495,26 +1501,14 @@ body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:ha
         padding: 0;
     }
 
-    /* The rail shows the icon only; the label stays readable by assistive tech. */
-    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-collapse-toggle .subadmin-toolbar-collapse-label {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        margin: -1px;
-        overflow: hidden;
-        clip-path: inset(50%);
+        html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar[data-position="left"]:not(.is-narrow),
+    html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-position="left"][data-sidebar-collapsed="true"]:not(.is-narrow) {
+        --subadmin-toolbar-chevron: "chevron_right";
     }
 
-    html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar[data-position="left"]:not(.is-narrow) .subadmin-toolbar-collapse-toggle::before,
-    html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-position="left"][data-sidebar-collapsed="true"]:not(.is-narrow) .subadmin-toolbar-collapse-toggle::before {
-        content: "chevron_right";
-        content: "chevron_right" / "";
-    }
-
-    html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar[data-position="right"]:not(.is-narrow) .subadmin-toolbar-collapse-toggle::before,
-    html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-position="right"][data-sidebar-collapsed="true"]:not(.is-narrow) .subadmin-toolbar-collapse-toggle::before {
-        content: "chevron_left";
-        content: "chevron_left" / "";
+    html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar[data-position="right"]:not(.is-narrow),
+    html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-position="right"][data-sidebar-collapsed="true"]:not(.is-narrow) {
+        --subadmin-toolbar-chevron: "chevron_left";
     }
 
     /* Top-level rows show the icon (or the initial) only; the text stays readable by assistive tech. */
@@ -1524,18 +1518,7 @@ body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:ha
         padding-inline: 0;
     }
 
-    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-item>.subadmin-toolbar-link>.subadmin-toolbar-text {
-        position: absolute !important;
-        width: 1px;
-        height: 1px;
-        margin: -1px;
-        padding: 0;
-        overflow: hidden;
-        clip-path: inset(50%);
-        white-space: nowrap;
-    }
-
-    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-item>.subadmin-toolbar-link>.subadmin-toolbar-caret,
+        :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-item>.subadmin-toolbar-link>.subadmin-toolbar-caret,
     :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-item>.subadmin-toolbar-split {
         display: none;
     }
@@ -1586,18 +1569,7 @@ body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:ha
         outline-offset: 2px;
     }
 
-    /* Text labels of a widget stay readable by assistive tech. */
-    :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-widget :is(.theme-toggle-text, .sat-theme-user-name, .sat-theme-user-email) {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        margin: -1px;
-        overflow: hidden;
-        clip-path: inset(50%);
-        white-space: nowrap;
-    }
-
-    /* A widget that cannot shrink to an icon opts out with this class. */
+        /* A widget that cannot shrink to an icon opts out with this class. */
     :is(html[data-subadmin-sidebar="collapsed"] #subadmin-toolbar, html:not([data-subadmin-sidebar]) #subadmin-toolbar[data-sidebar-collapsed="true"])[data-sidebar-mode="collapsible"]:not(.is-narrow) .subadmin-toolbar-widget.subadmin-widget-no-rail {
         display: none;
     }
