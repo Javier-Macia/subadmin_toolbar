@@ -23,16 +23,22 @@ function subadmin_toolbar_update_10001(): void {
  * Adds the new appearance options without changing the stored ones.
  */
 function subadmin_toolbar_update_10002(): void {
-  $config = \Drupal::configFactory()->getEditable('subadmin_toolbar.general');
-  $appearance = $config->get('appearance');
-  $appearance = is_array($appearance) ? $appearance : [];
-  $config->set('appearance', $appearance + Appearance::defaults())->save();
+  _subadmin_toolbar_add_missing_appearance();
 }
 
 /**
  * Adds the layout options without changing the stored appearance values.
  */
 function subadmin_toolbar_update_10003(): void {
+  _subadmin_toolbar_add_missing_appearance();
+}
+
+/**
+ * Fills the missing appearance options with the defaults.
+ *
+ * The stored appearance values are kept as they are.
+ */
+function _subadmin_toolbar_add_missing_appearance(): void {
   $config = \Drupal::configFactory()->getEditable('subadmin_toolbar.general');
   $appearance = $config->get('appearance');
   $appearance = is_array($appearance) ? $appearance : [];

@@ -203,7 +203,8 @@ class GeneralSettingsForm extends ToolbarFormBase {
       'left' => $this->t('Left'),
       'right' => $this->t('Right'),
     ]);
-    $sidebar_only = [':input[name="appearance[layout][position]"]' => ['!value' => 'top']];
+    $layout_input = static fn(string $name): string => ':input[name="appearance[layout][' . $name . ']"]';
+    $sidebar_only = [$layout_input('position') => ['!value' => 'top']];
     $group['layout']['sidebar_mode'] = $select((string) $this->t('Sidebar mode'), 'sidebar_mode', [
       'fixed' => $this->t('Fixed'),
       'collapsible' => $this->t('Collapsible'),
@@ -215,7 +216,7 @@ class GeneralSettingsForm extends ToolbarFormBase {
       '#type' => 'checkbox',
       '#title' => $this->t('Start the sidebar collapsed'),
       '#default_value' => $values['sidebar_start_collapsed'],
-      '#states' => ['visible' => $sidebar_only + [':input[name="appearance[layout][sidebar_mode]"]' => ['value' => 'collapsible']]],
+      '#states' => ['visible' => $sidebar_only + [$layout_input('sidebar_mode') => ['value' => 'collapsible']]],
     ];
 
     $group['dimensions'] = [
