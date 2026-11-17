@@ -4,7 +4,8 @@
  * Template for the Subadmin Toolbar.
  *
  * Available variables:
- * - links: Nested menu links (id, title, url, icon, icon_type, below).
+ * - links: Nested menu items (id, type, title, url, icon, icon_type, below).
+ *   The type is link or separator; a separator only has a title.
  * - widgets: Render arrays of the block widgets.
  * - toolbar_title: Brand title.
  * - toolbar_icon_url: URL of the uploaded brand icon, if any.
@@ -36,6 +37,14 @@
 {% macro render_menu_items(items, is_root, indicator, with_title) %}
   {% import _self as macros %}
   {% for link in items %}
+    {% if link.type|default('link') == 'separator' %}
+      {# A separator is a line with an optional group title: nothing to focus or follow. #}
+      <li class="{{ is_root ? 'subadmin-toolbar-item' : 'subadmin-toolbar-subitem' }} is-separator" role="separator"{% if link.title %} aria-label="{{ link.title|striptags }}"{% endif %}>
+        {% if link.title %}
+          <span class="subadmin-toolbar-separator-title" aria-hidden="true">{{ link.title }}</span>
+        {% endif %}
+      </li>
+    {% else %}
     {# A parent without a URL (stored as "#") is only a wrapper: it opens its submenu and goes nowhere. #}
     {% set is_linked = link.url and link.url != '#' %}
     <li class="{{ is_root ? 'subadmin-toolbar-item' : 'subadmin-toolbar-subitem' }}{{ link.below ? ' has-submenu ' ~ (is_linked ? 'is-linked' : 'is-wrapper') }}">
@@ -61,6 +70,7 @@
         </ul>
       {% endif %}
     </li>
+    {% endif %}
   {% endfor %}
 {% endmacro %}
 {% import _self as macros %}

@@ -1,0 +1,22 @@
+/*
+ * Material Symbols are ligatures: until the font has loaded their name shows
+ * as text. While the page is flagged as pending (js/subadmin-icons-ready.js)
+ * the icons of the toolbar and of the links form are clipped to their font
+ * size and stay invisible, so nothing flashes or moves.
+ */
+html.subadmin-icons-pending :is(#subadmin-toolbar, .subadmin-admin-header, .subadmin-visual-builder-container) .material-symbols-outlined {
+    max-width: 1em;
+    overflow: hidden;
+    visibility: hidden;
+}
+
+/* The carets of the hamburger list are 48px touch targets. */
+html.subadmin-icons-pending #subadmin-toolbar.is-narrow .subadmin-toolbar-caret {
+    max-width: 48px;
+}
+
+@media (max-width: 768px) {
+    html.subadmin-icons-pending #subadmin-toolbar .subadmin-toolbar-caret {
+        max-width: 48px;
+    }
+}

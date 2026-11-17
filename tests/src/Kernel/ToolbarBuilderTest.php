@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\subadmin_toolbar\Kernel;
 
+use Drupal\Core\Form\FormState;
 use Drupal\subadmin_toolbar\Appearance;
+use Drupal\subadmin_toolbar\Form\SettingsForm;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use PHPUnit\Framework\Attributes\Group;
@@ -365,6 +367,214 @@ class ToolbarBuilderTest extends KernelTestBase {
       $this->assertSame($expected, in_array('subadmin_toolbar/sidebar_init', $libraries, TRUE), "$position $mode");
       $this->assertContains('subadmin_toolbar/toolbar', $libraries);
     }
+  }
+
+  /**
+   * Separators are kept where they sit between links and are not links.
+   */
+  public function testSeparatorsRenderAsSeparators(): void {
+    $this->setUpCurrentUser([], ['access subadmin toolbar']);
+    $this->setLinks([
+      ['id' => 'a', 'title' => 'A', 'url' => '/a'],
+      ['id' => 's', 'type' => 'separator', 'title' => 'Group', 'url' => '/ignored', 'icon' => 'home'],
+      ['id' => 'b', 'title' => 'B', 'url' => '/b'],
+      ['id' => 'p', 'title' => 'P', 'url' => ''],
+      ['id' => 'c', 'pid' => 'p', 'title' => 'C', 'url' => '/c'],
+      ['id' => 's2', 'pid' => 'p', 'type' => 'separator', 'title' => '', 'weight' => 1],
+      ['id' => 'd', 'pid' => 'p', 'title' => 'D', 'url' => '/d'],
+    ]);
+
+    $links = $this->container->get('subadmin_toolbar.builder')->build()['#links'];
+    $this->assertSame(['a', 's', 'b', 'p'], array_keys($links));
+    $this->assertSame('separator', $links['s']['type']);
+    $this->assertSame('link', $links['a']['type']);
+    $this->assertSame(['c', 's2', 'd'], array_keys($links['p']['below']));
+
+    $html = $this->renderToolbar();
+    $this->assertSame(2, substr_count($html, 'role="separator"'));
+    $this->assertSame(1, preg_match('/<li class="subadmin-toolbar-item is-separator" role="separator"[^>]*>/', $html));
+    $this->assertSame(1, preg_match('/<li class="subadmin-toolbar-subitem is-separator" role="separator"[^>]*>/', $html));
+    $this->assertStringContainsString('subadmin-toolbar-separator-title', $html);
+    // A separator is neither a link nor a button: nothing to focus.
+    $this->assertDoesNotMatchRegularExpression('/is-separator[^>]*>\s*<(a|button)\b/', $html);
+    $this->assertStringNotContainsString('/ignored', $html);
+    $this->assertSame(1, substr_count($html, 'subadmin-toolbar-separator-title'));
+  }
+
+  /**
+   * Leading, trailing and doubled separators are not rendered.
+   */
+  public function testSeparatorsNeedLinksOnBothSides(): void {
+    $this->setUpCurrentUser([], ['access subadmin toolbar']);
+    $roles = $this->container->get('current_user')->getRoles();
+    $sep = fn(string $id, array $extra = []) => ['id' => $id, 'type' => 'separator'] + $extra;
+    $this->setLinks([
+      $sep('lead'),
+      ['id' => 'a', 'title' => 'A', 'url' => '/a'],
+      $sep('one'),
+      $sep('two'),
+      ['id' => 'hidden', 'title' => 'Hidden', 'url' => '/h', 'roles' => ['nobody']],
+      $sep('three', ['status' => 'disabled']),
+      $sep('four', ['roles' => ['nobody']]),
+      ['id' => 'b', 'title' => 'B', 'url' => '/b', 'roles' => $roles],
+      $sep('five', ['roles' => ['nobody']]),
+      $sep('trail'),
+    ]);
+
+    $links = $this->container->get('subadmin_toolbar.builder')->build()['#links'];
+    $this->assertSame(['a', 'one', 'b'], array_keys($links));
+  }
+
+  /**
+   * A parent whose only children are separators is a plain link.
+   */
+  public function testParentWithOnlySeparatorsHasNoSubmenu(): void {
+    $this->setUpCurrentUser([], ['access subadmin toolbar']);
+    $this->setLinks([
+      ['id' => 'p', 'title' => 'P', 'url' => '/p'],
+      ['id' => 's', 'pid' => 'p', 'type' => 'separator', 'title' => 'Nothing'],
+      ['id' => 'q', 'title' => 'Q', 'url' => ''],
+      ['id' => 't', 'pid' => 'q', 'type' => 'separator'],
+    ]);
+
+    $links = $this->container->get('subadmin_toolbar.builder')->build()['#links'];
+    $this->assertSame([], $links['p']['below']);
+    $this->assertSame([], $links['q']['below']);
+    $html = $this->renderToolbar();
+    $this->assertStringNotContainsString('has-submenu', $html);
+    $this->assertStringNotContainsString('subadmin-toolbar-split', $html);
+    $this->assertStringNotContainsString('role="separator"', $html);
+  }
+
+  /**
+   * Children of a separator are promoted to the root like orphans.
+   */
+  public function testSeparatorIsNeverParent(): void {
+    $this->setUpCurrentUser([], ['access subadmin toolbar']);
+    $this->setLinks([
+      ['id' => 'a', 'title' => 'A', 'url' => '/a'],
+      ['id' => 's', 'type' => 'separator'],
+      ['id' => 'x', 'pid' => 's', 'title' => 'X', 'url' => '/x'],
+    ]);
+    $links = $this->container->get('subadmin_toolbar.builder')->build()['#links'];
+    $this->assertSame(['a', 's', 'x'], array_keys($links));
+  }
+
+  /**
+   * Instantiates the links form.
+   */
+  protected function linksForm(): SettingsForm {
+    return SettingsForm::create($this->container);
+  }
+
+  /**
+   * Submitted values of a links row.
+   */
+  protected function row(string $id, string $type, string $title, string $url = ''): array {
+    return [
+      'title' => $title,
+      'weight' => 0,
+      'configuration' => [
+        'id' => $id,
+        'pid' => '',
+        'status' => 'enabled',
+        'type' => $type,
+        'url' => $url,
+        'icon_type' => 'material-symbols-outlined',
+        'icon' => '',
+        'roles' => [],
+      ],
+    ];
+  }
+
+  /**
+   * Runs the validation and the submission of the links form.
+   */
+  protected function submitLinks(array $rows): FormState {
+    $form_state = new FormState();
+    $form_state->setValues(['links_wrapper' => ['links' => $rows]]);
+    $form_state->setTriggeringElement(['#name' => 'op']);
+    $form = [];
+    $form_object = $this->linksForm();
+    $form_object->validateForm($form, $form_state);
+    if (!$form_state->getErrors()) {
+      $form_object->submitForm($form, $form_state);
+    }
+    return $form_state;
+  }
+
+  /**
+   * A separator row saves without a URL and keeps its type and title.
+   */
+  public function testFormSavesSeparatorWithoutUrl(): void {
+    $state = $this->submitLinks([
+      $this->row('a', 'link', 'A', '/a'),
+      $this->row('s', 'separator', 'Group', ''),
+    ]);
+    $this->assertSame([], $state->getErrors());
+    $links = $this->config('subadmin_toolbar.settings')->get('links');
+    $this->assertSame('separator', $links[1]['type']);
+    $this->assertSame('Group', $links[1]['title']);
+    $this->assertSame('', $links[1]['url']);
+    $this->assertSame('', $links[1]['icon']);
+    $this->assertSame('link', $links[0]['type']);
+  }
+
+  /**
+   * Only links have their URL validated.
+   */
+  public function testFormValidatesUrlOfLinksOnly(): void {
+    $state = $this->submitLinks([$this->row('a', 'link', 'A', 'javascript:alert(1)')]);
+    $this->assertCount(1, $state->getErrors());
+
+    $state = $this->submitLinks([$this->row('s', 'separator', '', 'javascript:alert(1)')]);
+    $this->assertSame([], $state->getErrors());
+    $links = $this->config('subadmin_toolbar.settings')->get('links');
+    $this->assertSame('', $links[0]['url']);
+  }
+
+  /**
+   * The stored links, with and without type, follow the schema.
+   */
+  public function testSeparatorsFollowTheSchema(): void {
+    $this->setLinks([
+      ['id' => 'a', 'title' => 'A', 'url' => '/a'],
+      [
+        'id' => 's',
+        'type' => 'separator',
+        'pid' => '',
+        'title' => '',
+        'url' => '',
+        'icon_type' => '',
+        'icon' => '',
+        'roles' => [],
+        'status' => 'enabled',
+        'weight' => 1,
+      ],
+    ]);
+    $typed = $this->container->get('config.typed')->get('subadmin_toolbar.settings');
+    $this->assertSame('separator', $typed->get('links')->get(1)->get('type')->getValue());
+    $this->assertSame('string', $typed->get('links')->getDataDefinition()['sequence']['mapping']['type']['type']);
+  }
+
+  /**
+   * The update hook drops the removed divider option and keeps the rest.
+   */
+  public function testUpdate10005RemovesDividers(): void {
+    $this->container->get('module_handler')->loadInclude('subadmin_toolbar', 'install');
+    // The removed option has no schema any more, so it is stored directly.
+    $storage = $this->container->get('config.storage');
+    $stored = $storage->read('subadmin_toolbar.general');
+    $stored['appearance'] = ['height' => 64, 'dividers' => 'all'];
+    $storage->write('subadmin_toolbar.general', $stored);
+    $this->container->get('config.factory')->reset('subadmin_toolbar.general');
+
+    subadmin_toolbar_update_10005();
+
+    $appearance = $this->config('subadmin_toolbar.general')->get('appearance');
+    $this->assertArrayNotHasKey('dividers', $appearance);
+    $this->assertSame(64, $appearance['height']);
+    $this->assertArrayNotHasKey('dividers', Appearance::defaults());
   }
 
 }

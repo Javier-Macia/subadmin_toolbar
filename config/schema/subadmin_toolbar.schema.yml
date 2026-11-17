@@ -12,6 +12,10 @@ subadmin_toolbar.settings:
           id:
             type: string
             label: 'ID'
+          type:
+            type: string
+            label: 'Item type (link or separator)'
+            requiredKey: false
           pid:
             type: string
             label: 'Parent ID'

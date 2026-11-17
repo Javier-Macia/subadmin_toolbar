@@ -133,19 +133,27 @@ class SettingsForm extends ToolbarFormBase {
         '#weight' => $item['weight'] ?? $index,
       ];
 
+      $is_separator = ($item['type'] ?? 'link') === 'separator';
+      if ($is_separator) {
+        $row['#attributes']['class'][] = 'is-separator';
+      }
+
       $row['title'] = [
         '#prefix' => $this->buildIndentation($item['pid'] ?? '', $parent_by_id),
         '#type' => 'textfield',
         '#title' => $this->t('Title'),
         '#title_display' => 'invisible',
         '#default_value' => $item['title'] ?? '',
-        '#placeholder' => $this->t('Link Title'),
+        '#placeholder' => $is_separator ? $this->t('Group title (optional)') : $this->t('Link Title'),
       ];
+      if ($is_separator) {
+        $row['title']['#field_prefix'] = '<span class="subadmin-separator-mark">' . $this->t('Separator') . '</span>';
+      }
 
       $row['configuration'] = [
         '#type' => 'details',
         '#title' => $this->t('Settings'),
-        '#open' => empty($item['title']),
+        '#open' => empty($item['title']) && !$is_separator,
         'id' => [
           '#type' => 'hidden',
           '#default_value' => $item['id'],
@@ -160,6 +168,11 @@ class SettingsForm extends ToolbarFormBase {
           '#type' => 'hidden',
           '#default_value' => $item['status'] ?? 'enabled',
           '#attributes' => ['class' => ['link-status']],
+        ],
+        'type' => [
+          '#type' => 'hidden',
+          '#default_value' => $is_separator ? 'separator' : 'link',
+          '#attributes' => ['class' => ['link-type']],
         ],
         'url' => [
           '#type' => 'textfield',
@@ -188,11 +201,15 @@ class SettingsForm extends ToolbarFormBase {
           '#description' => $this->t('If no roles are selected, the link will be visible to all authorized users.'),
         ], 'roles'),
       ];
-      $this->alterItemConfiguration($row['configuration'], $item, 'link');
+      if ($is_separator) {
+        unset($row['configuration']['url'], $row['configuration']['icon_type'], $row['configuration']['icon']);
+        $row['configuration']['roles']['#description'] = $this->t('If no roles are selected, the separator will be visible to all authorized users.');
+      }
+      $this->alterItemConfiguration($row['configuration'], $item, $is_separator ? 'separator' : 'link');
 
       $row['weight'] = [
         '#type' => 'weight',
-        '#title' => $this->t('Weight for @title', ['@title' => $item['title'] ?? 'New link']),
+        '#title' => $this->t('Weight for @title', ['@title' => ($item['title'] ?? '') ?: ($is_separator ? $this->t('separator') : $this->t('new link'))]),
         '#title_display' => 'invisible',
         '#default_value' => $item['weight'] ?? $index,
         '#delta' => 100,
@@ -225,6 +242,18 @@ class SettingsForm extends ToolbarFormBase {
       ],
       '#limit_validation_errors' => [['links_wrapper']],
       '#attributes' => ['class' => ['subadmin-btn-add-row']],
+    ];
+    $form['links_wrapper']['actions']['add_separator'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Add separator'),
+      '#name' => 'add_separator_button',
+      '#submit' => ['::addSeparatorSubmit'],
+      '#ajax' => [
+        'callback' => '::linksAjaxCallback',
+        'wrapper' => 'links-wrapper',
+      ],
+      '#limit_validation_errors' => [['links_wrapper']],
+      '#attributes' => ['class' => ['subadmin-btn-add-separator-row']],
     ];
 
     return parent::buildForm($form, $form_state);
@@ -296,18 +325,20 @@ class SettingsForm extends ToolbarFormBase {
         continue;
       }
       $config = $item['configuration'] ?? [];
+      $is_separator = ($config['type'] ?? 'link') === 'separator';
       $link = [
         'id' => $config['id'] ?? '',
+        'type' => $is_separator ? 'separator' : 'link',
         'pid' => $config['pid'] ?? '',
         'status' => $config['status'] ?? 'enabled',
-        'title' => $item['title'] ?? '',
-        'url' => trim($config['url'] ?? ''),
-        'icon_type' => $config['icon_type'] ?? '',
-        'icon' => $config['icon'] ?? '',
+        'title' => trim($item['title'] ?? ''),
+        'url' => $is_separator ? '' : trim($config['url'] ?? ''),
+        'icon_type' => $is_separator ? '' : ($config['icon_type'] ?? ''),
+        'icon' => $is_separator ? '' : ($config['icon'] ?? ''),
         'roles' => array_values(array_filter($config['roles'] ?? [])),
         'weight' => (int) ($item['weight'] ?? 0),
       ];
-      $this->alterItemValues($link, $config, 'link');
+      $this->alterItemValues($link, $config, $is_separator ? 'separator' : 'link');
       $links[] = $link;
     }
 
@@ -347,14 +378,29 @@ class SettingsForm extends ToolbarFormBase {
    * Submit callback for adding a link.
    */
   public function addLinkSubmit(array &$form, FormStateInterface $form_state): void {
+    $this->addItem($form_state, 'link');
+  }
+
+  /**
+   * Submit callback for adding a separator.
+   */
+  public function addSeparatorSubmit(array &$form, FormStateInterface $form_state): void {
+    $this->addItem($form_state, 'separator');
+  }
+
+  /**
+   * Appends an empty item of the given type and rebuilds the form.
+   */
+  protected function addItem(FormStateInterface $form_state, string $type): void {
     $links = $this->updateLinksFromSubmittedValues($form_state);
     $links[] = [
       'id' => $this->generateId(),
+      'type' => $type,
       'pid' => '',
       'status' => 'enabled',
       'title' => '',
       'url' => '',
-      'icon_type' => 'material-symbols-outlined',
+      'icon_type' => $type === 'separator' ? '' : 'material-symbols-outlined',
       'icon' => '',
       'roles' => [],
       'weight' => count($links),
@@ -401,6 +447,10 @@ class SettingsForm extends ToolbarFormBase {
       return;
     }
     foreach ($form_state->getValue(['links_wrapper', 'links']) ?? [] as $index => $item) {
+      // A separator has no URL.
+      if (($item['configuration']['type'] ?? 'link') === 'separator') {
+        continue;
+      }
       if (!$this->isValidUrl(trim($item['configuration']['url'] ?? ''))) {
         $form_state->setErrorByName(
           "links_wrapper][links][$index][configuration][url",
