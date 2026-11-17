@@ -72,7 +72,7 @@ abstract class ToolbarFormBase extends ConfigFormBase {
    * @param array $item
    *   The stored item the row is built from.
    * @param string $type
-   *   Either "link" or "widget".
+   *   Either "link", "separator" or "widget".
    */
   protected function alterItemConfiguration(array &$configuration, array $item, string $type): void {
     $this->moduleHandler->alter('subadmin_toolbar_item_configuration', $configuration, $item, $type);
@@ -86,7 +86,7 @@ abstract class ToolbarFormBase extends ConfigFormBase {
    * @param array $configuration
    *   The submitted values of the "configuration" element of the row.
    * @param string $type
-   *   Either "link" or "widget".
+   *   Either "link", "separator" or "widget".
    */
   protected function alterItemValues(array &$item, array $configuration, string $type): void {
     $this->moduleHandler->alter('subadmin_toolbar_item_values', $item, $configuration, $type);

@@ -54,6 +54,17 @@ Finally, grant the **Access the Subadmin Toolbar** permission to the roles that 
 
 Link URLs must start with `/` (internal path) or be a valid external URL; unsafe protocols such as `javascript:` are rejected.
 
+## Separators
+
+Besides links, the links list can hold separators: a line, with an optional group title, that you place wherever you want it. Use "Add separator" next to "Add link", then drag it to the place you want, at the top level or inside a parent. A separator has a title (optional), roles and the enabled switch; it has no URL or icon.
+
+- Expanded sidebar, submenus and hamburger list: a thin line that spans the row, in the toolbar border color. The title, if any, is shown above the line as a small muted heading.
+- Top bar: a thin vertical line between two items. The title is not shown there, except inside a submenu or the "More" menu.
+- Collapsed rail: only the line.
+- A separator is not focusable and keyboard navigation skips it. It is exposed to assistive technology as `role="separator"` and, with a title, named after it.
+- A separator is only shown between two visible links of its level. Leading, trailing and consecutive separators (also those left that way by roles or disabled items) are not rendered, and a parent that only has separators is a plain link.
+- Existing links need no changes: an item without a type is a link.
+
 ## Layout: top bar or sidebar
 
 The **Layout** group of the general settings controls where the toolbar sits.

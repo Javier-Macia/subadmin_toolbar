@@ -34,6 +34,18 @@ function subadmin_toolbar_update_10003(): void {
 }
 
 /**
+ * Removes the divider option, replaced by separator items in the links.
+ */
+function subadmin_toolbar_update_10005(): void {
+  $config = \Drupal::configFactory()->getEditable('subadmin_toolbar.general');
+  $appearance = $config->get('appearance');
+  if (is_array($appearance) && array_key_exists('dividers', $appearance)) {
+    unset($appearance['dividers']);
+    $config->set('appearance', $appearance)->save();
+  }
+}
+
+/**
  * Fills the missing appearance options with the defaults.
  *
  * The stored appearance values are kept as they are.

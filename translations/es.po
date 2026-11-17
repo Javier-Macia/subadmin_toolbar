@@ -611,3 +611,21 @@ msgstr "Colapsar menú lateral"
 
 msgid "Expand menu"
 msgstr "Expandir menú lateral"
+
+msgid "Add separator"
+msgstr "Añadir separador"
+
+msgid "Separator"
+msgstr "Separador"
+
+msgid "separator"
+msgstr "separador"
+
+msgid "new link"
+msgstr "nuevo enlace"
+
+msgid "Group title (optional)"
+msgstr "Título del grupo (opcional)"
+
+msgid "If no roles are selected, the separator will be visible to all authorized users."
+msgstr "Si no se selecciona ningún rol, el separador será visible para todos los usuarios autorizados."

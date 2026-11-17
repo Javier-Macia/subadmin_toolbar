@@ -46,7 +46,7 @@ function hook_subadmin_toolbar_item_visibility_alter(bool &$visible, array $item
  * @param array $item
  *   The stored link or widget the row shows.
  * @param string $type
- *   Either "link" or "widget".
+ *   Either "link", "separator" or "widget".
  */
 function hook_subadmin_toolbar_item_configuration_alter(array &$configuration, array $item, string $type): void {
   $configuration['only_weekdays'] = [
@@ -69,7 +69,7 @@ function hook_subadmin_toolbar_item_configuration_alter(array &$configuration, a
  * @param array $configuration
  *   The submitted values of the "configuration" element of the row.
  * @param string $type
- *   Either "link" or "widget".
+ *   Either "link", "separator" or "widget".
  */
 function hook_subadmin_toolbar_item_values_alter(array &$item, array $configuration, string $type): void {
   $item['only_weekdays'] = !empty($configuration['only_weekdays']);

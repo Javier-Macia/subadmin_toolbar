@@ -842,9 +842,54 @@ body.theme-dark .subadmin-block-settings-wrapper > legend,
   max-width: 28rem;
 }
 
-.subadmin-btn-add-item {
+.subadmin-btn-add-item,
+.subadmin-btn-add-separator {
   white-space: nowrap;
   hyphens: none;
+}
+
+.subadmin-preview-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.subadmin-btn-add-separator {
+  background: transparent;
+  color: #2563eb;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.subadmin-btn-add-separator:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+/* A separator is told apart by its mark and its muted title. */
+.subadmin-item-mark,
+.subadmin-separator-mark {
+  flex: none;
+  margin-inline-end: 0.4rem;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+
+.subadmin-drag-item.is-separator>.subadmin-drag-item-header .subadmin-item-title-text {
+  opacity: 0.8;
 }
 
 html[data-gin-color-scheme="dark"] .subadmin-tree-hint,

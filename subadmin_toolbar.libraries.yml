@@ -33,8 +33,13 @@ admin_form:
     - subadmin_toolbar/material_icons
 
 material_icons:
-  version: 2.2.0
+  version: 2.3.0
+  header: true
+  js:
+    js/subadmin-icons-ready.js: { minified: true }
   css:
+    base:
+      css/subadmin-icons.css: {}
     theme:
       'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap': { type: external }
       'https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Round|Material+Icons+Sharp|Material+Icons+Two+Tone': { type: external }
