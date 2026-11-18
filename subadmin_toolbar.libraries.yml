@@ -5,6 +5,7 @@ toolbar:
       css/subadmin-toolbar.css: {}
   js:
     js/subadmin-toolbar.js: {}
+    js/subadmin-tooltip.js: {}
   dependencies:
     - core/drupalSettings
     - core/once

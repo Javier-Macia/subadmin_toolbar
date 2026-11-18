@@ -895,6 +895,12 @@
             </div>
             <div class="subadmin-icon-grid" role="group" aria-label="${Drupal.t('Suggested icons')}"></div>
             <p class="subadmin-field-help" id="subadmin-icon-help">${Drupal.t('If the preview shows text instead of an icon, that icon name does not exist.')}</p>
+          </div>
+          <div class="subadmin-form-group">
+            <label>${Drupal.t('Description')}
+              <input type="text" class="subadmin-editor-description" maxlength="255" value="${esc(field('input[name$="[description]"]'))}">
+            </label>
+            <p class="subadmin-field-help">${Drupal.t('Short help shown in a bubble when hovering the link.')}</p>
           </div>`;
 
       this.editorEmpty.hidden = true;
@@ -1007,6 +1013,7 @@
         set('input[name$="[url]"]', data.url);
         set('select[name$="[icon_type]"]', data.iconType);
         set('input[name$="[icon]"]', data.icon);
+        set('input[name$="[description]"]', q('.subadmin-editor-description').value);
       }
 
       this.editorWrapper.querySelectorAll('.subadmin-editor-group-option').forEach((chk) => {

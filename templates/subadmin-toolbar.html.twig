@@ -4,7 +4,7 @@
  * Template for the Subadmin Toolbar.
  *
  * Available variables:
- * - links: Nested menu items (id, type, title, url, icon, icon_type, below).
+ * - links: Nested menu items (id, type, title, description, url, icon, icon_type, below).
  *   The type is link or separator; a separator only has a title.
  * - widgets: Render arrays of the block widgets.
  * - toolbar_title: Brand title.
@@ -48,7 +48,10 @@
     {# A parent without a URL (stored as "#") is only a wrapper: it opens its submenu and goes nowhere. #}
     {% set is_linked = link.url and link.url != '#' %}
     <li class="{{ is_root ? 'subadmin-toolbar-item' : 'subadmin-toolbar-subitem' }}{{ link.below ? ' has-submenu ' ~ (is_linked ? 'is-linked' : 'is-wrapper') }}">
-      <a href="{{ link.url }}"{% if with_title and is_root %} title="{{ link.title|striptags }}"{% endif %} class="{{ is_root ? 'subadmin-toolbar-link' : 'subadmin-toolbar-sublink' }}">
+      {# The description is shown as a CSS bubble; only a collapsed sidebar falls back to the native title. #}
+      {% set tip = link.description|default(with_title and is_root ? link.title|striptags : '') %}
+      {% set is_bubble = tip and not (is_root and with_title) %}
+      <a href="{{ link.url }}"{% if is_bubble %} data-tooltip="{{ tip }}" aria-description="{{ tip }}"{% elseif tip %} title="{{ tip }}"{% endif %} class="{{ is_root ? 'subadmin-toolbar-link' : 'subadmin-toolbar-sublink' }}">
         {{ macros.render_icon(link) }}
         <span class="subadmin-toolbar-text">{{ link.title }}</span>
         {% if link.below and not is_linked %}

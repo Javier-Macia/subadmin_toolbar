@@ -31,6 +31,10 @@ subadmin_toolbar.settings:
           icon:
             type: string
             label: 'Icon'
+          description:
+            type: string
+            label: 'Description'
+            requiredKey: false
           roles:
             type: sequence
             label: 'Roles'

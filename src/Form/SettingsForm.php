@@ -193,6 +193,13 @@ class SettingsForm extends ToolbarFormBase {
           '#default_value' => $item['icon'] ?? '',
           '#placeholder' => $this->t('e.g., settings (or fa-cog)'),
         ],
+        'description' => [
+          '#type' => 'textfield',
+          '#title' => $this->t('Description'),
+          '#default_value' => $item['description'] ?? '',
+          '#maxlength' => 255,
+          '#description' => $this->t('Short help shown in a bubble when hovering the link.'),
+        ],
         'roles' => $this->markEditorGroup([
           '#type' => 'checkboxes',
           '#title' => $this->t('Allowed Roles'),
@@ -202,7 +209,7 @@ class SettingsForm extends ToolbarFormBase {
         ], 'roles'),
       ];
       if ($is_separator) {
-        unset($row['configuration']['url'], $row['configuration']['icon_type'], $row['configuration']['icon']);
+        unset($row['configuration']['url'], $row['configuration']['icon_type'], $row['configuration']['icon'], $row['configuration']['description']);
         $row['configuration']['roles']['#description'] = $this->t('If no roles are selected, the separator will be visible to all authorized users.');
       }
       $this->alterItemConfiguration($row['configuration'], $item, $is_separator ? 'separator' : 'link');
@@ -335,6 +342,7 @@ class SettingsForm extends ToolbarFormBase {
         'url' => $is_separator ? '' : trim($config['url'] ?? ''),
         'icon_type' => $is_separator ? '' : ($config['icon_type'] ?? ''),
         'icon' => $is_separator ? '' : ($config['icon'] ?? ''),
+        'description' => $is_separator ? '' : trim($config['description'] ?? ''),
         'roles' => array_values(array_filter($config['roles'] ?? [])),
         'weight' => (int) ($item['weight'] ?? 0),
       ];
@@ -402,6 +410,7 @@ class SettingsForm extends ToolbarFormBase {
       'url' => '',
       'icon_type' => $type === 'separator' ? '' : 'material-symbols-outlined',
       'icon' => '',
+      'description' => '',
       'roles' => [],
       'weight' => count($links),
     ];

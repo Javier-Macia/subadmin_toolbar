@@ -1756,3 +1756,155 @@ body:not(:has(.gin-secondary-toolbar)):not(:has(.region-sticky-watcher)):not(:ha
 #subadmin-toolbar .is-separator[hidden] {
     display: none !important;
 }
+
+/* ==========================================================================
+   Link descriptions
+   Bubble with the description of the links. CSS only: the text comes from
+   data-tooltip. On desktop it is a bubble with a pointer next to the link;
+   on narrow screens (touch, no hover) the description is shown as text under
+   the link name. subadmin-tooltip.js passes the real submenu width
+   (--subadmin-toolbar-tip-offset) and flips the bubble (data-tip-side) when
+   there is no room on one side.
+   ========================================================================== */
+#subadmin-toolbar {
+    --subadmin-toolbar-tip-bg: #fff;
+    --subadmin-toolbar-tip-text: #222330;
+    --subadmin-toolbar-tip-gap: 0.9rem;
+    --subadmin-toolbar-tip-arrow-w: 0.5rem;
+    --subadmin-toolbar-tip-arrow-h: 0.9rem;
+    --subadmin-toolbar-tip-menu-width: var(--subadmin-toolbar-submenu-min-width, 220px);
+}
+
+[data-theme="dark"] #subadmin-toolbar,
+[data-color-scheme="dark"] #subadmin-toolbar,
+#subadmin-toolbar[data-theme="dark"],
+#subadmin-toolbar[data-color-scheme="dark"] {
+    --subadmin-toolbar-tip-bg: #3b3b3f;
+    --subadmin-toolbar-tip-text: #e4e5e5;
+}
+
+/* Desktop */
+#subadmin-toolbar:not(.is-narrow) :is(.subadmin-toolbar-link, .subadmin-toolbar-sublink)[data-tooltip] {
+    position: relative;
+}
+
+#subadmin-toolbar:not(.is-narrow) :is(.subadmin-toolbar-link, .subadmin-toolbar-sublink)[data-tooltip]::after,
+#subadmin-toolbar:not(.is-narrow) :is(.subadmin-toolbar-link, .subadmin-toolbar-sublink)[data-tooltip]::before {
+    display: block;
+    position: absolute;
+    z-index: calc(var(--subadmin-toolbar-z-index, 1000) + 2);
+    inset-block-start: 50%;
+    translate: 0 -50%;
+    background: var(--subadmin-toolbar-tip-bg);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+}
+
+#subadmin-toolbar:not(.is-narrow) :is(.subadmin-toolbar-link, .subadmin-toolbar-sublink)[data-tooltip]::after {
+    content: attr(data-tooltip);
+    inset-inline-start: calc(100% + var(--subadmin-toolbar-tip-gap));
+    box-sizing: border-box;
+    width: max-content;
+    max-width: min(18rem, 60vw);
+    padding: 0.55em 0.8em;
+    border-radius: 0.75rem;
+    color: var(--subadmin-toolbar-tip-text);
+    box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.2);
+    font-size: clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem);
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: normal;
+    text-align: start;
+    text-wrap: pretty;
+    white-space: normal;
+}
+
+/* Pointer: a triangle overlapping the bubble by 1px so no seam shows. */
+#subadmin-toolbar:not(.is-narrow) :is(.subadmin-toolbar-link, .subadmin-toolbar-sublink)[data-tooltip]::before {
+    content: "";
+    /* Above the bubble, or its shadow darkens the pointer. */
+    z-index: calc(var(--subadmin-toolbar-z-index, 1000) + 3);
+    inset-inline-start: calc(100% + var(--subadmin-toolbar-tip-gap) - var(--subadmin-toolbar-tip-arrow-w) + 1px);
+    width: var(--subadmin-toolbar-tip-arrow-w);
+    height: var(--subadmin-toolbar-tip-arrow-h);
+    clip-path: polygon(100% 0, 0 50%, 100% 100%);
+}
+
+#subadmin-toolbar:not(.is-narrow) :is(.subadmin-toolbar-link, .subadmin-toolbar-sublink)[data-tooltip]:is(:hover, :focus-visible)::after,
+#subadmin-toolbar:not(.is-narrow) :is(.subadmin-toolbar-link, .subadmin-toolbar-sublink)[data-tooltip]:is(:hover, :focus-visible)::before {
+    opacity: 1;
+    transition-delay: 0.3s;
+}
+
+/* Top-level parents: the bar clips overflow, so the bubble is fixed to the
+   window, beside the dropdown and below the bar. */
+#subadmin-toolbar[data-position="top"]:not(.is-narrow) .subadmin-toolbar-item.has-submenu > .subadmin-toolbar-link[data-tooltip]::after,
+#subadmin-toolbar[data-position="top"]:not(.is-narrow) .subadmin-toolbar-item.has-submenu > .subadmin-toolbar-link[data-tooltip]::before {
+    position: fixed;
+    inset-inline-start: auto;
+    margin-inline-start: calc(var(--subadmin-toolbar-tip-offset, var(--subadmin-toolbar-tip-menu-width)) + var(--subadmin-toolbar-tip-gap) - var(--subadmin-toolbar-item-padding, 16px));
+    translate: 0 0;
+}
+
+#subadmin-toolbar[data-position="top"]:not(.is-narrow) .subadmin-toolbar-item.has-submenu > .subadmin-toolbar-link[data-tooltip]::after {
+    inset-block-start: calc(var(--subadmin-toolbar-height, 56px) + 0.5rem);
+}
+
+#subadmin-toolbar[data-position="top"]:not(.is-narrow) .subadmin-toolbar-item.has-submenu > .subadmin-toolbar-link[data-tooltip]::before {
+    inset-block-start: calc(var(--subadmin-toolbar-height, 56px) + 1.5rem);
+    translate: 0 -50%;
+    margin-inline-start: calc(var(--subadmin-toolbar-tip-offset, var(--subadmin-toolbar-tip-menu-width)) + var(--subadmin-toolbar-tip-gap) - var(--subadmin-toolbar-item-padding, 16px) - var(--subadmin-toolbar-tip-arrow-w) + 1px);
+}
+
+/* Parents inside a dropdown: the bubble goes after their submenu. */
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-subitem.has-submenu > .subadmin-toolbar-sublink[data-tooltip]::after {
+    inset-inline-start: calc(100% + var(--subadmin-toolbar-tip-offset, var(--subadmin-toolbar-tip-menu-width)) + var(--subadmin-toolbar-tip-gap));
+}
+
+#subadmin-toolbar:not(.is-narrow) .subadmin-toolbar-subitem.has-submenu > .subadmin-toolbar-sublink[data-tooltip]::before {
+    inset-inline-start: calc(100% + var(--subadmin-toolbar-tip-offset, var(--subadmin-toolbar-tip-menu-width)) + var(--subadmin-toolbar-tip-gap) - var(--subadmin-toolbar-tip-arrow-w) + 1px);
+}
+
+/* Left side: items moved into "More" (they sit at the right edge and open their
+   submenus to the left) and any item the script flips for lack of room on the
+   right (data-tip-side="left"). With a submenu, the bubble goes after it. */
+#subadmin-toolbar:not(.is-narrow) :is(.subadmin-toolbar-more .subadmin-toolbar-sublink[data-tooltip]:not([data-tip-side="right"]), .subadmin-toolbar-sublink[data-tooltip][data-tip-side="left"])::after {
+    inset-inline-start: auto;
+    inset-inline-end: calc(100% + var(--subadmin-toolbar-tip-gap));
+}
+
+#subadmin-toolbar:not(.is-narrow) :is(.subadmin-toolbar-more .subadmin-toolbar-sublink[data-tooltip]:not([data-tip-side="right"]), .subadmin-toolbar-sublink[data-tooltip][data-tip-side="left"])::before {
+    inset-inline-start: auto;
+    inset-inline-end: calc(100% + var(--subadmin-toolbar-tip-gap) - var(--subadmin-toolbar-tip-arrow-w) + 1px);
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+#subadmin-toolbar:not(.is-narrow) :is(.subadmin-toolbar-more .subadmin-toolbar-subitem.has-submenu > .subadmin-toolbar-sublink[data-tooltip]:not([data-tip-side="right"]), .subadmin-toolbar-subitem.has-submenu > .subadmin-toolbar-sublink[data-tooltip][data-tip-side="left"])::after {
+    inset-inline-start: auto;
+    inset-inline-end: calc(100% + var(--subadmin-toolbar-tip-offset, var(--subadmin-toolbar-tip-menu-width)) + var(--subadmin-toolbar-tip-gap));
+}
+
+#subadmin-toolbar:not(.is-narrow) :is(.subadmin-toolbar-more .subadmin-toolbar-subitem.has-submenu > .subadmin-toolbar-sublink[data-tooltip]:not([data-tip-side="right"]), .subadmin-toolbar-subitem.has-submenu > .subadmin-toolbar-sublink[data-tooltip][data-tip-side="left"])::before {
+    inset-inline-start: auto;
+    inset-inline-end: calc(100% + var(--subadmin-toolbar-tip-offset, var(--subadmin-toolbar-tip-menu-width)) + var(--subadmin-toolbar-tip-gap) - var(--subadmin-toolbar-tip-arrow-w) + 1px);
+}
+
+/* Narrow screen: the description is plain text under the link name. */
+#subadmin-toolbar.is-narrow :is(.subadmin-toolbar-link, .subadmin-toolbar-sublink)[data-tooltip] {
+    flex-wrap: wrap;
+}
+
+#subadmin-toolbar.is-narrow :is(.subadmin-toolbar-link, .subadmin-toolbar-sublink)[data-tooltip]::after {
+    content: attr(data-tooltip);
+    display: block;
+    flex: 0 0 100%;
+    box-sizing: border-box;
+    padding-block-start: 0.25rem;
+    padding-inline-start: calc(var(--subadmin-toolbar-icon-size, 22px) + 0.75rem);
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.35;
+    opacity: 0.7;
+    white-space: normal;
+}

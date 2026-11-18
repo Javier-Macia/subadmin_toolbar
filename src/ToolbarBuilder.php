@@ -158,6 +158,7 @@ class ToolbarBuilder {
         'url' => $is_separator || empty($link['url']) ? '#' : UrlHelper::stripDangerousProtocols($link['url']),
         'icon' => $is_separator ? '' : ($link['icon'] ?? ''),
         'icon_type' => $link['icon_type'] ?? 'material-symbols-outlined',
+        'description' => $is_separator ? '' : trim($link['description'] ?? ''),
       ];
     }
 

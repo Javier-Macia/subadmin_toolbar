@@ -629,3 +629,9 @@ msgstr "Título del grupo (opcional)"
 
 msgid "If no roles are selected, the separator will be visible to all authorized users."
 msgstr "Si no se selecciona ningún rol, el separador será visible para todos los usuarios autorizados."
+
+msgid "Description"
+msgstr "Descripción"
+
+msgid "Short help shown in a bubble when hovering the link."
+msgstr "Ayuda breve que se muestra en un bocadillo al pasar el ratón por el enlace."
