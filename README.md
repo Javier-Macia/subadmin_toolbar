@@ -16,6 +16,7 @@ It provides a clean, distraction-free horizontal top toolbar with nested dropdow
   - `subadmin_toolbar_local_material_icons`: Automatically switches the toolbar from Google Fonts CDN to local fonts if `native_material` is installed.
   - `subadmin_toolbar_local_fontawesome`: Automatically switches the toolbar from Cloudflare CDN to local fonts if `native_fontawesome` is installed.
 - **Brand Customization:** Custom logo/icon upload, accent colors, and custom brand link.
+- **Link descriptions:** Each link can have a short description, shown as a bubble on hover (as plain text under the link on narrow screens).
 
   - `subadmin_toolbar_subroles`: if you use the `subroles` module, links and widgets get an "Allowed subroles" setting. An item is visible to users with one of its roles or one of its subroles (a subrole only counts while the user has its parent role). If an item has subroles and no roles, only the users with those subroles see it.
 
